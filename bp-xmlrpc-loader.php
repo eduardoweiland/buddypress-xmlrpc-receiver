@@ -8,7 +8,7 @@
  License: GNU GENERAL PUBLIC LICENSE 3.0 http://www.gnu.org/licenses/gpl.txt
  Version: 0.1.0
  Text Domain: bp-xmlrpc
- Site Wide Only: true
+ Network: true
 */
 
 //need limit rate
@@ -48,7 +48,7 @@ function bp_xmlrpc_admin_add_admin_menu() {
 
 //loader file never works - as it doesn't hook the admin_menu
 if ( defined( 'BP_VERSION' ) ) {
-    add_action( 'admin_menu', 'bp_xmlrpc_admin_init' );
+    add_action( 'admin_menu', 'bp_xmlrpc_admin_add_admin_menu' );
 } else {
     add_action( 'bp_init', 'bp_xmlrpc_admin_init');
 }
