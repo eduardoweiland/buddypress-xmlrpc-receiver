@@ -1,10 +1,10 @@
-<?php 
+<?php
 /**
- * Gets an array of capabilities according to each user role.  Each role will return its caps, 
+ * Gets an array of capabilities according to each user role.  Each role will return its caps,
  * which are then added to the overall $capabilities array.
  *
- * Note that if no role has the capability, it technically no longer exists.  Since this could be 
- * a problem with folks accidentally deleting the default WordPress capabilities, the 
+ * Note that if no role has the capability, it technically no longer exists.  Since this could be
+ * a problem with folks accidentally deleting the default WordPress capabilities, the
  * members_default_capabilities() will return those all the defaults.
  *
  * @since 0.1
@@ -67,7 +67,7 @@ function bp_xmlrpc_admin_calls( ) {
 function bp_xmlrpc_admin_calls_check( $type, $currenttypes ) {
 	if ( in_array( $type, $currenttypes) )
 		echo 'checked';
-		
+
 	return;
 }
 
@@ -76,13 +76,13 @@ function bp_xmlrpc_admin() {
 
 	/* If the form has been submitted and the admin referrer checks out, save the settings */
 	if ( isset( $_POST['submit'] ) && check_admin_referer('bp_xmlrpc_admin') ) {
-	
+
 		if( isset($_POST['ab_xmlrpc_enable'] ) && !empty($_POST['ab_xmlrpc_enable']) ) {
 			update_option( 'bp_xmlrpc_enabled', true );
 		} else {
 			update_option( 'bp_xmlrpc_enabled', false );
 		}
-	
+
 		//check for valid cap and update - if not keep old.
 		if( isset($_POST['cap_low'] ) && !empty($_POST['cap_low']) ) {
 			if ( bp_xmlrpc_admin_check_for_cap( $_POST['cap_low'] ) ) {
@@ -92,19 +92,19 @@ function bp_xmlrpc_admin() {
 			}
 		} else {
 			update_option( 'bp_xmlrpc_cap_low', 'upload_files' );
-			
+
 			echo '<div id="message" class="updated fade"><p>Capability was left blank - this is required - assuming \'upload_files\' (author).</p></div>';
 		}
-	
+
 		if( isset($_POST['ab_xmlrpc_calls'] ) && !empty($_POST['ab_xmlrpc_calls']) ) {
 			update_option( 'bp_xmlrpc_enabled_calls', $_POST['ab_xmlrpc_calls'] );
 		} else {
 			update_option( 'bp_xmlrpc_enabled_calls', '' );
 		}
-		
+
 		$updated = true;
 	}
-?>	
+?>
 	<div class="wrap">
 		<h2><?php _e( 'XML-RPC Options', 'bp-xmlrpc' ); ?></h2>
 
@@ -114,18 +114,18 @@ function bp_xmlrpc_admin() {
 
 			<h4><?php _e( 'Enable XMLRPC:', 'bp-xmlrpc' ); ?></h4>
 			<?php $enabled = get_option( 'bp_xmlrpc_enabled' ); ?>
-			
+
 			<table class="form-table">
 				<tr valign="top">
 					<th><label for="ab_xmlrpc_enable"><?php _e( 'Enable remote XML-RPC BuddyPress functions', 'bp-xmlrpc' ) ?></label></th>
 					<td><input id="ab_xmlrpc_enable" type="checkbox" <?php if ($enabled) echo 'checked'; ?> name="ab_xmlrpc_enable" value="1" /></td>
 				</tr>
-				
+
 				<tr>
 					<th scope="row"><label for="cap_low"><?php _e( 'XML-RPC WordPress capability (what level can access)', 'bp-xmlrpc' ) ?></label></th>
 					<td><input type="text" name="cap_low" id="cap_low" value="<?php echo get_option( 'bp_xmlrpc_cap_low'); ?>" /></td>
 				</tr>
-				
+
 			</table>
 
 			<h4><?php _e( 'Enable remote functions:', 'bp-xmlrpc' ); ?></h4>
@@ -143,28 +143,28 @@ function bp_xmlrpc_admin() {
 					</tr>
 				<?php } ?>
 			</table>
-			
+
 			<?php wp_nonce_field( 'bp_xmlrpc_admin' ); ?>
-			
+
 			<p class="submit"><input type="submit" name="submit" value="Save Settings"/></p>
-		
+
 		<h3>Url</h3>
 		<div>
 		<p><?php echo BP_XMLRPC_URL; ?></p>
 		</div>
-		
+
 		<h3>Author:</h3>
 		<div id="bp-xmlrpc-admin-tips" style="margin-left:15px;">
 			<p><a href="http://etivite.com">Author's Demo BuddyPress site</a></p>
 			<p>
-			<a href="http://blog.etiviti.com/2010/06/buddypress-xmlrpc-receiver-plugin/">BuddyPress XMLRPC Receiver About Page</a><br/> 
+			<a href="http://blog.etiviti.com/2010/06/buddypress-xmlrpc-receiver-plugin/">BuddyPress XMLRPC Receiver About Page</a><br/>
 			<a href="http://blog.etiviti.com/tag/buddypress-plugin/">My BuddyPress Plugins</a><br/>
 			<a href="http://blog.etiviti.com/tag/buddypress-hack/">My BuddyPress Hacks</a><br/>
 			<a href="http://twitter.com/etiviti">Follow Me on Twitter</a>
 			</p>
 			<p><a href="http://buddypress.org/community/groups/buddypress-xmlrpc-receiver/">BuddyPress.org Plugin Page</a> (with donation link)</p>
 		</div>
-		
+
 	</div>
 <?php
 }

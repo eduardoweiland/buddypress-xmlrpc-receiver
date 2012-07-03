@@ -1,30 +1,27 @@
 === Plugin Name ===
-Contributors: nuprn1
-Donate link: http://firevortex.net/donatebeer/
+Contributors: nuprn1, duduweiland
+Donate link:
 Tags: buddypress, xmlrpc, xml-rpc, activity stream, activity
-Requires at least: PHP 5.2, WordPress 2.9.2, BuddyPress 1.2.4.1
-Tested up to: PHP 5.2.x, WordPress 2.9.2, BuddyPress 1.2.4.1
+Requires at least: PHP 5.2, WordPress 3.4.0, BuddyPress 1.5.6
+Tested up to: PHP 5.4.4, WordPress 3.4.1, BuddyPress 1.5.6
 Stable tag: 0.1.0
 
-This plugin allows certain XML-RPC commands for BuddyPress (Requires a client!)
+This plugin allows certain XML-RPC commands for BuddyPress
 
 == Description ==
 
-** IMPORTANT **
-
-This plugin will not be updated for future versions of BuddyPress (1.3) - if you would like to take over this plugin, please contact me.
-http://twitter.com/#!/etiviti/statuses/29550143485247489
+** BACK TO WORK **
 
 This plugin allows certain XML-RPC commands for BuddyPress (Requires a client!)
 
-A client application is required to connect to this BuddyPress XML-RPC - Receiver plugin. This could be anything from a standalone WordPress plugin to an iPhone app.
+A client application is required to connect to this BuddyPress XML-RPC - Receiver plugin. This could be anything from a standalone WordPress plugin to an iPhone or Android app.
 
 Please read the FAQ and About Page.
 
 = Related Links: = 
 
-* <a href="http://blog.etiviti.com/2010/06/buddypress-xmlrpc-receiver-plugin/" title="BuddyPress XML-RPC - Receiver - Blog About Page">About Page</a>
-* <a href="http://etivite.com" title="Plugin Demo Site">Author's BuddyPress Demo Site</a>
+* <a href="https://github.com/duduweiland/buddypress-xmlrpc-receiver/issues" title="Report bugs">Bug tracker</a>
+* <a href="https://github.com/duduweiland/buddypress-xmlrpc-receiver/wiki" title="Project wiki">Wiki</a>
 
 
 == Installation ==
@@ -45,7 +42,7 @@ A client is required to send XML-RPC commands. If you have built a client (from 
 
 = What commands and data is returned? =
 
-Please see the About page for a full list of commands and expected data.
+Please read the Wiki for a full list of commands and expected data.
 
 * What commands are available?
 
@@ -82,10 +79,10 @@ bp.verifyConnection
 
 = My question isn't answered here =
 
-Please contact me on
+Please contact the developers on
 
-* <a href="http://blog.etiviti.com/2010/06/buddypress-xmlrpc-receiver-plugin/" title="BuddyPress XML-RPC - Receiver - Blog About Page">About Page</a>
-* <a href="http://twitter.com/etiviti" title="Twitter">Twitter</a>
+* <a href="https://github.com/duduweiland/buddypress-xmlrpc-receiver" title="BuddyPress XML-RPC Receiver - GitHub">Project Page</a>
+* <a href="http://twitter.com/duduweiland" title="Twitter">Twitter</a>
 
 
 == Changelog ==
