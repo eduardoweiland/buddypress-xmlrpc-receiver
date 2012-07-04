@@ -1,3 +1,7 @@
+Plugin do Doode para comunicação com aplicação Android...
+@duduweiland e @vitormicillo
+
+
 === Plugin Name ===
 Contributors: nuprn1, duduweiland
 Donate link:
