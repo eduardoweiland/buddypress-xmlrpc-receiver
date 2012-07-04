@@ -1,0 +1,6 @@
+* implement "bp.postComment"
+* admin can (de)activate XML-RPC per user (?)
+* need limit rate
+* need max results (right now hardcoded at 35 per request)
+* oauth it?
+* more rpc commands?

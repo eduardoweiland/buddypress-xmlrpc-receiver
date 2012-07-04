@@ -11,11 +11,6 @@
  Network: true
 */
 
-//need limit rate
-//need max results (right now hardcoded at 35 per request)
-//oauth it?
-//more rpc commands?
-
 
 if ( !defined( 'BP_XMLRPC_URL' ) )
     define( 'BP_XMLRPC_URL', WP_PLUGIN_URL .'/'. basename( dirname( __FILE__ ) ) .'/bp-xmlrpc.php' );

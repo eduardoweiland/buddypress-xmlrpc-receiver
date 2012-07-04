@@ -826,6 +826,7 @@ class bp_xmlrpc_server extends IXR_Server {
 
 }
 
+// start the server
 $bp_xmlrpc_server = new bp_xmlrpc_server();
 $bp_xmlrpc_server->serve_request();
 

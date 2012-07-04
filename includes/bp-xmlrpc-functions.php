@@ -2,25 +2,26 @@
 
 function bp_xmlrpc_bp_init() {
 
-    bp_core_setup_globals();
-
-    if ( function_exists('bp_activity_setup_globals') ) bp_activity_setup_globals();
-    if ( function_exists('bp_blogs_setup_globals') ) bp_blogs_setup_globals();
-    if ( function_exists('groups_setup_globals') ) groups_setup_globals();
-    if ( function_exists('xprofile_setup_globals') ) xprofile_setup_globals();
-    if ( function_exists('friends_setup_globals') ) friends_setup_globals();
-    if ( function_exists('messages_setup_globals') ) messages_setup_globals();
-    if ( function_exists('bp_follow_setup_globals') ) bp_follow_setup_globals();
+    // we can call that directly ?
+    do_action('bp_init');
 
 }
 add_action('bp_xmlrpc_bp_init', 'bp_xmlrpc_bp_init');
 
 function bp_xmlrpc_calls_enabled_check( $type, $currenttypes ) {
-    return in_array( $type, $currenttypes);
+    return in_array( $type, $currenttypes );
 }
 
+/**
+ * Verify if the passed APIKey is valid for the passed login.
+ *
+ * @param string $password   User's password
+ * @param string $apikey     User's generated apikey
+ * @param string $user_login User's username
+ * @return boolean true if is the login is valid, false otherwise
+ */
 function bp_xmlrpc_login_apikey_check( $password, $apikey, $user_login ) {
-    $hash = hash_hmac('md5', $user_login, $password);
+    $hash = hash_hmac( 'md5', $user_login, $password );
 
     if ( $hash != $apikey ) {
         return false;
@@ -29,18 +30,24 @@ function bp_xmlrpc_login_apikey_check( $password, $apikey, $user_login ) {
     return true;
 }
 
+/**
+ * Generates a new ApiKey for the user.
+ *
+ * @param int $user_id The user's ID.
+ * @return string A new generated key
+ */
 function bp_xmlrpc_generate_apikey( $user_id ) {
     global $wp_hasher;
 
     if ( !$user_id )
         return false;
 
-    $user = get_user_by('id', $user_id);
+    $user = get_user_by( 'id', $user_id );
 
     if ( !$user )
         return false;
 
-    $pass_frag = substr($user->user_pass, 8, 4);
+    $pass_frag = substr( $user->user_pass, 8, 4 );
 
     $key = wp_hash( $user->user_login . '|bp-xmlrpc|' . $pass_frag );
     $apikey = hash_hmac('md5', $user->user_login, $key);
