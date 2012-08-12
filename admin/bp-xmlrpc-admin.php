@@ -88,31 +88,36 @@ function bp_xmlrpc_admin() {
             if ( bp_xmlrpc_admin_check_for_cap( $_POST['cap_low'] ) ) {
                 update_option( 'bp_xmlrpc_cap_low', $_POST['cap_low'] );
             } else {
-                echo '<div id="message" class="error"><p>Invalid wordpress capability - please see <a href="http://codex.wordpress.org/Roles_and_Capabilities#Capability_vs._Role_Table">WP Roles and Capabilities</a>.</p></div>';
+                echo '<div id="message" class="error"><p>' . __( 'Invalid wordpress capability - please see <a href="http://codex.wordpress.org/Roles_and_Capabilities#Capability_vs._Role_Table">WP Roles and Capabilities</a>.', 'bp-xmlrpc' ) . '</p></div>';
             }
         } else {
             update_option( 'bp_xmlrpc_cap_low', 'upload_files' );
 
-            echo '<div id="message" class="updated fade"><p>Capability was left blank - this is required - assuming \'upload_files\' (author).</p></div>';
+            echo '<div id="message" class="updated fade"><p>' . __( 'Capability was left blank - this is required - assuming \'upload_files\' (author).', 'bp-xmlrpc' ) . '</p></div>';
         }
 
-        if( isset($_POST['ab_xmlrpc_calls'] ) && !empty($_POST['ab_xmlrpc_calls']) ) {
+        if ( isset($_POST['ab_xmlrpc_calls'] ) && !empty($_POST['ab_xmlrpc_calls']) ) {
             update_option( 'bp_xmlrpc_enabled_calls', $_POST['ab_xmlrpc_calls'] );
         } else {
             update_option( 'bp_xmlrpc_enabled_calls', '' );
+        }
+
+        if ( isset( $_POST['ab_xmlrpc_more_info'] ) ) {
+            update_option( 'bp_xmlrpc_more_info', $_POST['ab_xmlrpc_more_info'] );
         }
 
         $updated = true;
     }
 ?>
     <div class="wrap">
+        <div id="icon-options-general" class="icon32"><br/></div>
+
         <h2><?php _e( 'XML-RPC Options', 'bp-xmlrpc' ); ?></h2>
 
         <?php if ( isset($updated) ) : echo "<div id='message' class='updated fade'><p>" . __( 'Settings Updated.', 'bp-xmlrpc' ) . "</p></div>"; endif; ?>
 
         <form action="<?php echo site_url() . '/wp-admin/admin.php?page=bp-xmlrpc-settings' ?>" name="bp-xmlrpc-settings-form" id="bp-xmlrpc-settings-form" method="post">
 
-            <h4><?php _e( 'Enable XMLRPC:', 'bp-xmlrpc' ); ?></h4>
             <?php $enabled = get_option( 'bp_xmlrpc_enabled' ); ?>
 
             <table class="form-table">
@@ -128,7 +133,7 @@ function bp_xmlrpc_admin() {
 
             </table>
 
-            <h4><?php _e( 'Enable remote functions:', 'bp-xmlrpc' ); ?></h4>
+            <h3><?php _e( 'Enable remote functions:', 'bp-xmlrpc' ); ?></h3>
 
             <table class="form-table">
                 <?php
@@ -144,35 +149,39 @@ function bp_xmlrpc_admin() {
                 <?php } ?>
             </table>
 
+            <h3><?php _e( 'Additional information:', 'bp-xmlrpc' ); ?></h3>
+
+            <p><?php _e( 'Some useful information for the users when they activate remote access (like a client they can use to connect).', 'bp-xmlrpc' ); ?></p>
+
+            <p><?php _e( 'By default, only the URL that the user should use to connect is displayed.', 'bp-xmlrpc' ); ?></p>
+
+            <textarea id="ab_xmlrpc_more_info" name="ab_xmlrpc_more_info" cols="80" rows="10" style="font-family: monospace"><?php echo get_option( 'bp_xmlrpc_more_info' ); ?></textarea>
+
             <?php wp_nonce_field( 'bp_xmlrpc_admin' ); ?>
 
             <p class="submit"><input type="submit" name="submit" value="Save Settings"/></p>
 
-        <h3>Your client should be configured to connect to this URL:</h3>
+        <h3><?php _e( 'Your client should be configured to connect to this URL:', 'bp-xmlrpc' ); ?></h3>
         <div>
             <code><?php echo BP_XMLRPC_URL; ?></code>
         </div>
 
-        <h3>License:</h3>
+        <h3><?php _e( 'About', 'bp-xmlrpc' ); ?></h3>
         <div id="bp-xmlrpc-admin-tips" style="margin-left:15px;">
             <p>Copyright &copy 2012 Eduardo Weiland</p>
 
-            <p>
-                This program is free software: you can redistribute it and/or modify
-                it under the terms of the GNU General Public License as published by
-                the Free Software Foundation, either version 3 of the License, or
-                (at your option) any later version.
-            </p>
+            <p><?php _e( 'This program is free software: you can redistribute it '   .
+            'and/or modify it under the terms of the GNU General Public License '    .
+            'as published by the Free Software Foundation, either version 3 of the ' .
+            'License, or (at your option) any later version.', 'bp-xmlrpc' ); ?></p>
 
-            <p>
-                This program is distributed in the hope that it will be useful,
-                but WITHOUT ANY WARRANTY; without even the implied warranty of
-                MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-                GNU General Public License for more details.
-            </p>
-        
-            <p><a href="http://www.gnu.org/licenses/gpl.txt">Full license text</a></p>
-            <p><a href="http://github.com/duduweiland/buddypress-xmlrpc-receiver">Project page</a></p>
+            <p><?php _e( 'This program is distributed in the hope that it will ' .
+            'be useful, but WITHOUT ANY WARRANTY; without even the implied '     .
+            'warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.'   .
+            'See the GNU General Public License for more details. ', 'bp-xmlrpc' ); ?></p>
+
+            <p><a href="http://www.gnu.org/licenses/gpl.txt"><?php _e( 'Full license text', 'bp-xmlrpc' ); ?></a></p>
+            <p><a href="http://github.com/duduweiland/buddypress-xmlrpc-receiver"><?php _e( 'Project page', 'bp-xmlrpc' ); ?></a></p>
 
         </div>
 
