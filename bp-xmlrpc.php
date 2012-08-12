@@ -1,9 +1,6 @@
 <?php
 /**
  * XML-RPC protocol support for BuddyPress
- *
- * if you move this file make sure to define BP_XMLRPC_URL in wp-config and change the include paths below (wp-load, class-ixr, bp-xmlrpc-functions)
- *
  */
 
 /**
@@ -11,7 +8,7 @@
  *
  * @var bool
  */
-define('XMLRPC_REQUEST', true);
+define( 'XMLRPC_REQUEST', true );
 
 // Some browser-embedded clients send cookies. We don't want them.
 $_COOKIE = array();
@@ -39,6 +36,13 @@ header('Content-Type: text/xml; charset=' . get_option('blog_charset'), true);
     <engineLink>http://buddypress.org/</engineLink>
     <homePageLink><?php bloginfo_rss('url') ?></homePageLink>
   </service>
+  <apis>
+    <api name="BuddyPress" blogID="1" preferred="true" apiLink="<?php echo BP_XMLRPC_URL ?>">
+      <settings>
+        <docs>http://github.com/duduweiland/buddypress-xmlrpc-receiver/wiki</docs>
+      </settings>
+    </api>
+  </apis>
 </rsd>
 <?php
 exit;
@@ -785,7 +789,7 @@ class bp_xmlrpc_server extends IXR_Server {
         }
 
         //check for attempts limits
-        //if ( $this->login_attempt_check( $user->ID )
+        //if ( $this->login_attempt_check( $user->ID ) )
         //    return $this->error;
 
         //awaken bp
