@@ -3,7 +3,7 @@
 function bp_xmlrpc_set_disabled_status() {
     global $bp;
 
-    if ( !is_super_admin() || bp_is_my_profile() || !$bp->displayed_user->id )
+    if ( !is_super_admin() || bp_is_my_profile() || !isset( $bp->displayed_user->id ) )
         return;
 
     if ( 'admin' == $bp->current_component && 'disable-xmlrpc' == $bp->current_action ) {
@@ -11,11 +11,11 @@ function bp_xmlrpc_set_disabled_status() {
         /* Check the nonce */
         check_admin_referer( 'bp_xmlrpc_disable_key' );
 
-        bp_core_add_message( __( 'Remote Access has been disabled.', 'bp-xmlrpc' ) );
+        bp_core_add_message( __( 'Remote access has been disabled.', 'bp-xmlrpc' ) );
 
         //set the access
         delete_user_meta( $bp->displayed_user->id, "bp_xmlrpc_apikey");
-        update_user_meta( $bp->displayed_user->id, "bp_xmlrpc_disabled", true);
+        update_user_meta( $bp->displayed_user->id, "bp_xmlrpc_disabled", true );
 
         //inform the user
         bp_xmlrpc_apikey_disabled_message();
@@ -27,11 +27,10 @@ function bp_xmlrpc_set_disabled_status() {
         /* Check the nonce */
         check_admin_referer( 'bp_xmlrpc_enable_key' );
 
-        bp_core_add_message( __( 'Remote Access has been enabled.', 'bp-xmlrpc' ) );
+        bp_core_add_message( __( 'Remote access has been enabled.', 'bp-xmlrpc' ) );
 
         //restore access
-        //update_user_meta( $bp->displayed_user->id, "bp_xmlrpc_disabled", false);
-        delete_user_meta( $bp->displayed_user->id, "bp_xmlrpc_disabled");
+        delete_user_meta( $bp->displayed_user->id, "bp_xmlrpc_disabled" );
 
         //re-inform the user
         bp_xmlrpc_apikey_enable_message();
@@ -44,48 +43,46 @@ add_action( 'wp', 'bp_xmlrpc_set_disabled_status', 3 );
 
 //add profile admin options to disable on a per user basis
 function bp_xmlrpc_adminbar_menu_items() {
-    global $bp;
+    global $bp, $wp_admin_bar;
 
-    if ( !is_super_admin() )
+    if ( !is_super_admin() || !isset( $bp->displayed_user->id ) )
         return;
-
-    if ( !get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled') ) { ?>
-        <li><a href="<?php echo wp_nonce_url( $bp->displayed_user->domain . 'admin/disable-xmlrpc/', 'bp_xmlrpc_disable_key' ) ?>" class="confirm"><?php _e( "Disable XML-RPC", 'buddypress' ) ?></a></li>
-    <?php } else if ( get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled') ) { ?>
+    
+    if ( get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled') ) { ?>
         <li><a href="<?php echo wp_nonce_url( $bp->displayed_user->domain . 'admin/enable-xmlrpc/', 'bp_xmlrpc_enable_key' ) ?>" class="confirm"><?php _e( "Enable XML-RPC", 'buddypress' ) ?></a></li>
+    <?php } else { ?>
+        <li><a href="<?php echo wp_nonce_url( $bp->displayed_user->domain . 'admin/disable-xmlrpc/', 'bp_xmlrpc_disable_key' ) ?>" class="confirm"><?php _e( "Disable XML-RPC", 'buddypress' ) ?></a></li>
     <?php }
-
 }
-add_action( 'xprofile_adminbar_menu_items', 'bp_xmlrpc_adminbar_menu_items' );
+add_action( 'bp_members_adminbar_admin_menu', 'bp_xmlrpc_adminbar_menu_items', 60 );
+// add_action( 'admin_bar_menu', 'bp_xmlrpc_adminbar_menu_items', 401 );
 
-//add apikey link to xprofile page
+// add apikey link to xprofile page
 function bp_xmlrpc_xprofile_setup_nav() {
     global $bp;
 
     if ( !get_option( 'bp_xmlrpc_enabled' ) )
         return false;
 
-    //loggedin as the admin should be able to override the settings
+    if ( !isset( $bp->displayed_user->id ) )
+        return false;
+
+    // loggedin as the admin should be able to override the settings
     if ( !is_super_admin() && get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled') )
         return false;
 
     if ( !current_user_can( get_option('bp_xmlrpc_cap_low') ) )
         return;
 
-    bp_core_new_subnav_item( array( 'name'            => __( 'XML-RPC APIKey', 'bp-xmlrpc' ),
-                                    'slug'            => 'xmlrpcapikey',
-                                    'parent_url'      => $bp->loggedin_user->domain . $bp->profile->slug . '/',
-                                    'parent_slug'     => $bp->profile->slug,
+    bp_core_new_subnav_item( array( 'name'            => __( 'Remote access', 'bp-xmlrpc' ),
+                                    'slug'            => 'remote-access',
+                                    'parent_url'      => $bp->displayed_user->domain . $bp->settings->slug . '/',
+                                    'parent_slug'     => $bp->settings->slug,
                                     'screen_function' => 'bp_xmlrpc_xprofile_screen_apikey',
                                     'position'        => 30,
-                                    'user_has_access' => bp_is_my_profile()  ) );
-
-    //$settings_link = $bp->loggedin_user->domain . $bp->settings->slug . '/';
-    //bp_core_new_subnav_item( array( 'name' => __( 'ba', 'buddypress' ), 'slug' => 'ba', 'parent_url' => $settings_link, 'parent_slug' => $bp->settings->slug, 'screen_function' => 'bp_xmlrpc_xprofile_screen_apikey', 'position' => 30, 'user_has_access' => bp_is_my_profile() ) );
-
+                                    'user_has_access' => bp_is_my_profile() || is_super_admin() ) );
 }
-// are this correct ? bp_setup_nav
-add_action( 'bp_setup_nav', 'bp_xmlrpc_xprofile_setup_nav',4 );
+add_action( 'bp_setup_nav', 'bp_xmlrpc_xprofile_setup_nav', 4 );
 
 
 //xprofile page to change user signature
@@ -119,65 +116,40 @@ function bp_xmlrpc_xprofile_screen_apikey() {
 }
 
 function bp_xmlrpc_xprofile_screen_title() {
-    __( 'XMLRPC APIKey', 'bp-xmlrpc' );
+    __( 'Remote access', 'bp-xmlrpc' );
 }
 
 function bp_xmlrpc_xprofile_screen_content() {
     global $bp;
 ?>
 
-    <h4><?php _e( 'XML-RPC APIKey', 'bp-xmlrpc' ) ?></h4>
+    <h3><?php _e( 'Remote access', 'bp-xmlrpc' ); ?></h3>
 
-    <p><?php _e( 'Your XML-RPC APIKey enables remote access to features of BuddyPress by use of third-party tools.', 'bp-xmlrpc'); ?></p>
+    <p><?php _e( 'You can access to features of BuddyPress by use of third-party tools.', 'bp-xmlrpc' ); ?></p>
 
-    <p><?php _e( 'A new APIKey is required if your login credentials have changed.', 'bp-xmlrpc'); ?></p>
-
-
-    <?php $key = get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_apikey');
-    if ($key) { ?>
-        <h5><?php _e( 'Remove APIKey', 'bp-xmlrpc' ); ?></h5>
-        <p><?php _e( 'Remove the APIKey to disable the service.', 'bp-xmlrpc'); ?></p>
-        <form method="post" id="bp-xmlrpc-remove-form" name="bp-xmlrpc-remove-form" class="standard-form" action="">
-
-            <div class="clear"></div>
-
-            <?php wp_nonce_field( 'bp_xmlrpc_remove_key' ); ?>
-
-            <div class="clear"></div>
-
-            <input style="color:red" type="submit" name="xmlrpc-apikey-remove-submit" value="<?php echo __( 'Remove XML-RPC APIKey', 'bp-xmlrpc' ); ?>">
-
-        </form>
-    <?php } else { ?>
-        <h5><?php _e( 'Generate APIKey', 'bp-xmlrpc' ); ?></h5>
-        <p><?php _e( 'An email confirmation will be sent with connection details.', 'bp-xmlrpc'); ?></p>
-        <form method="post" id="bp-xmlrpc-form" name="bp-xmlrpc-form" class="standard-form" action="">
-
-            <div class="clear"></div>
-
-            <?php wp_nonce_field( 'bp_xmlrpc_key' ); ?>
-
-            <div class="clear"></div>
-
-            <input style="color:green" type="submit" name="xmlrpc-apikey-submit" value="<?php echo __( 'Generate new XML-RPC APIKey', 'bp-xmlrpc' ); ?>">
-
-        </form>
-
-    <?php } ?>
-
+    <p><?php _e( 'Here you can manage what services can access your account remotely.', 'bp-xmlrpc' ); ?></p>
 
     <div class="clear"></div>
 
-    <h5><?php _e( 'Connection Details', 'bp-xmlrpc' ); ?></h5>
+    <?php $moreinfo = get_option( 'bp_xmlrpc_more_info' );
 
-    <table class="form-table">
-        <tr>
-            <th>Url</th>
-            <td><?php echo BP_XMLRPC_URL; ?></td>
-        </tr>
-    </table>
+    if ( empty( $moreinfo ) ) { ?>
+
+        <h4><?php _e( 'Connection Details', 'bp-xmlrpc' ); ?></h4>
+
+        <p><?php _e( 'You can send XML-RPC requests to this URL:', 'bp-xmlrpc' ); ?></p>
+
+        <code style="background: #EAEAEA;"><?php echo BP_XMLRPC_URL; ?></code>
+
+    <?php } else {
+
+        // format output and add links for at-mentions
+        echo apply_filters( 'the_content', wpautop( $moreinfo ) );
+
+    } ?>
+
+    <div class="clear"></div>
 
     <?php
-
 }
 ?>
