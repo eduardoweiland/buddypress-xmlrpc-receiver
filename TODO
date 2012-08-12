@@ -1,6 +1,8 @@
-* implement "bp.postComment"
-* admin can (de)activate XML-RPC per user (?)
+* Need new authentication method (ApiKey sucks)
+  - oauth ?
+  - per device apikey ?
+  - ideas ?
 * need limit rate
 * need max results (right now hardcoded at 35 per request)
-* oauth it?
-* more rpc commands?
+* more rpc commands
+  - "bp.postComment"
