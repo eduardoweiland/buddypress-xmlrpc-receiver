@@ -4,7 +4,7 @@
  Plugin URI: http://github.com/duduweiland/buddypress-xmlrpc-receiver/
  Description: Allow remote connection via XML-RPC for BuddyPress
  Author: Eduardo Weiland
- Author URI: http://github.com/duduweiland/
+ Author URI: http://eduardoweiland.tk
  License: GNU General Public License v3 http://www.gnu.org/licenses/gpl.txt
  Version: 0.1.1
  Text Domain: bp-xmlrpc
@@ -30,14 +30,14 @@ add_action( 'bp_core_loaded', 'bp_xmlrpc_init' );
 
 
 /**
- * Load language files.
+ * Load translation files.
  *
  * @return void
  */
-function bp_xmlrpc_load_languages() {
+function bp_xmlrpc_load_translation() {
     load_plugin_textdomain( 'bp-xmlrpc', false, basename( dirname( __FILE__ ) ) .'/languages/' );
 }
-add_action('plugins_loaded', 'bp_xmlrpc_load_languages');
+add_action( 'plugins_loaded', 'bp_xmlrpc_load_translation' );
 
 
 /**
@@ -57,7 +57,7 @@ function bp_xmlrpc_admin_add_admin_menu() {
     add_options_page( __( 'BuddyPress XML-RPC', 'bp-xmlrpc' ), __( 'BuddyPress XML-RPC', 'bp-xmlrpc' ), 'manage_options', 'bp-xmlrpc-settings', 'bp_xmlrpc_admin' );
 
     // set up defaults
-    add_option('bp_xmlrpc_cap_low', 'upload_files' ); // author
+    add_option( 'bp_xmlrpc_cap_low', 'upload_files' ); // author
 }
 add_action( 'admin_menu', 'bp_xmlrpc_admin_add_admin_menu' );
 

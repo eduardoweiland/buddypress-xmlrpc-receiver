@@ -33,8 +33,7 @@ function bp_xmlrpc_admin_get_role_capabilities() {
 }
 
 /**
- * Checks if a specific capability has been given to at least one role. If it has,
- * return true. Else, return false.
+ * Checks if a specific capability has been given to at least one role.
  *
  * @since 0.1
  * @uses members_get_role_capabilities() Checks for capability in array of role caps.
@@ -65,7 +64,7 @@ function bp_xmlrpc_admin_calls( ) {
 }
 
 function bp_xmlrpc_admin_calls_check( $type, $currenttypes ) {
-    if ( in_array( $type, $currenttypes) )
+    if ( in_array( $type, $currenttypes ) )
         echo 'checked';
 
     return;
@@ -75,16 +74,16 @@ function bp_xmlrpc_admin() {
     global $bp;
 
     /* If the form has been submitted and the admin referrer checks out, save the settings */
-    if ( isset( $_POST['submit'] ) && check_admin_referer('bp_xmlrpc_admin') ) {
+    if ( isset( $_POST['submit'] ) && check_admin_referer( 'bp_xmlrpc_admin' ) ) {
 
-        if( isset($_POST['ab_xmlrpc_enable'] ) && !empty($_POST['ab_xmlrpc_enable']) ) {
+        if( isset( $_POST['ab_xmlrpc_enable'] ) && !empty( $_POST['ab_xmlrpc_enable'] ) ) {
             update_option( 'bp_xmlrpc_enabled', true );
         } else {
             update_option( 'bp_xmlrpc_enabled', false );
         }
 
         //check for valid cap and update - if not keep old.
-        if( isset($_POST['cap_low'] ) && !empty($_POST['cap_low']) ) {
+        if( isset( $_POST['cap_low'] ) && !empty( $_POST['cap_low'] ) ) {
             if ( bp_xmlrpc_admin_check_for_cap( $_POST['cap_low'] ) ) {
                 update_option( 'bp_xmlrpc_cap_low', $_POST['cap_low'] );
             } else {
@@ -96,7 +95,7 @@ function bp_xmlrpc_admin() {
             echo '<div id="message" class="updated fade"><p>' . __( 'Capability was left blank - this is required - assuming \'upload_files\' (author).', 'bp-xmlrpc' ) . '</p></div>';
         }
 
-        if ( isset($_POST['ab_xmlrpc_calls'] ) && !empty($_POST['ab_xmlrpc_calls']) ) {
+        if ( isset( $_POST['ab_xmlrpc_calls'] ) && !empty( $_POST['ab_xmlrpc_calls'] ) ) {
             update_option( 'bp_xmlrpc_enabled_calls', $_POST['ab_xmlrpc_calls'] );
         } else {
             update_option( 'bp_xmlrpc_enabled_calls', '' );
@@ -114,7 +113,7 @@ function bp_xmlrpc_admin() {
 
         <h2><?php _e( 'XML-RPC Options', 'bp-xmlrpc' ); ?></h2>
 
-        <?php if ( isset($updated) ) : echo "<div id='message' class='updated fade'><p>" . __( 'Settings Updated.', 'bp-xmlrpc' ) . "</p></div>"; endif; ?>
+        <?php if ( isset( $updated ) ) { echo '<div id="message" class="updated fade"><p>' . __( 'Settings Updated.', 'bp-xmlrpc' ) . '</p></div>'; } ?>
 
         <form action="<?php echo site_url() . '/wp-admin/admin.php?page=bp-xmlrpc-settings' ?>" name="bp-xmlrpc-settings-form" id="bp-xmlrpc-settings-form" method="post">
 
@@ -123,12 +122,12 @@ function bp_xmlrpc_admin() {
             <table class="form-table">
                 <tr valign="top">
                     <th><label for="ab_xmlrpc_enable"><?php _e( 'Enable remote XML-RPC BuddyPress functions', 'bp-xmlrpc' ) ?></label></th>
-                    <td><input id="ab_xmlrpc_enable" type="checkbox" <?php if ($enabled) echo 'checked'; ?> name="ab_xmlrpc_enable" value="1" /></td>
+                    <td><input id="ab_xmlrpc_enable" type="checkbox" <?php if ( $enabled ) echo 'checked'; ?> name="ab_xmlrpc_enable" value="1" /></td>
                 </tr>
 
                 <tr>
                     <th scope="row"><label for="cap_low"><?php _e( 'XML-RPC WordPress capability (what level can access)', 'bp-xmlrpc' ) ?></label></th>
-                    <td><input type="text" name="cap_low" id="cap_low" value="<?php echo get_option( 'bp_xmlrpc_cap_low'); ?>" /></td>
+                    <td><input type="text" name="cap_low" id="cap_low" value="<?php echo get_option( 'bp_xmlrpc_cap_low' ); ?>" /></td>
                 </tr>
 
             </table>
@@ -138,10 +137,10 @@ function bp_xmlrpc_admin() {
             <table class="form-table">
                 <?php
 
-                $enabledcalls = (array) get_option( 'bp_xmlrpc_enabled_calls');
+                $enabledcalls = (array) get_option( 'bp_xmlrpc_enabled_calls' );
                 $totalcalls = bp_xmlrpc_admin_calls();
 
-                foreach ($totalcalls as $call) { ?>
+                foreach ( $totalcalls as $call ) { ?>
                     <tr>
                         <th><label for="type-<?php echo $call ?>"><?php echo $call ?></label></th>
                         <td><input id="type-<?php echo $call ?>" type="checkbox" <?php bp_xmlrpc_admin_calls_check( $call, $enabledcalls ); ?> name="ab_xmlrpc_calls[]" value="<?php echo $call ?>" /></td>

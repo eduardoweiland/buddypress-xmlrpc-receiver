@@ -3,36 +3,39 @@
 function bp_xmlrpc_set_disabled_status() {
     global $bp;
 
-    if ( !is_super_admin() || bp_is_my_profile() || !isset( $bp->displayed_user->id ) )
+    if ( !is_super_admin() || !bp_is_user() || bp_is_my_profile() )
         return;
 
-    if ( 'admin' == $bp->current_component && 'disable-xmlrpc' == $bp->current_action ) {
+    if ( 'admin' !== $bp->current_component )
+        return;
 
-        /* Check the nonce */
+    if ( 'disable-xmlrpc' == $bp->current_action ) {
+
+        // Check the nonce
         check_admin_referer( 'bp_xmlrpc_disable_key' );
 
         bp_core_add_message( __( 'Remote access has been disabled.', 'bp-xmlrpc' ) );
 
-        //set the access
-        delete_user_meta( $bp->displayed_user->id, "bp_xmlrpc_apikey");
-        update_user_meta( $bp->displayed_user->id, "bp_xmlrpc_disabled", true );
+        // set the access
+        //delete_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_apikey' );
+        update_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled', true );
 
-        //inform the user
+        // inform the user
         bp_xmlrpc_apikey_disabled_message();
 
         bp_core_redirect( wp_get_referer() );
 
-    } else if ( 'admin' == $bp->current_component &&  'enable-xmlrpc' == $bp->current_action ) {
+    } else if ( 'enable-xmlrpc' == $bp->current_action ) {
 
-        /* Check the nonce */
+        // Check the nonce
         check_admin_referer( 'bp_xmlrpc_enable_key' );
 
         bp_core_add_message( __( 'Remote access has been enabled.', 'bp-xmlrpc' ) );
 
-        //restore access
-        delete_user_meta( $bp->displayed_user->id, "bp_xmlrpc_disabled" );
+        // restore access
+        delete_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled' );
 
-        //re-inform the user
+        // re-inform the user
         bp_xmlrpc_apikey_enable_message();
 
         bp_core_redirect( wp_get_referer() );
@@ -41,37 +44,45 @@ function bp_xmlrpc_set_disabled_status() {
 }
 add_action( 'wp', 'bp_xmlrpc_set_disabled_status', 3 );
 
-//add profile admin options to disable on a per user basis
+// add profile admin options to disable on a per user basis
 function bp_xmlrpc_adminbar_menu_items() {
     global $bp, $wp_admin_bar;
 
-    if ( !is_super_admin() || !isset( $bp->displayed_user->id ) )
+    // only show for admins on user pages
+    if ( !is_super_admin() || !bp_is_user() || bp_is_my_profile() )
         return;
-    
-    if ( get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled') ) { ?>
-        <li><a href="<?php echo wp_nonce_url( $bp->displayed_user->domain . 'admin/enable-xmlrpc/', 'bp_xmlrpc_enable_key' ) ?>" class="confirm"><?php _e( "Enable XML-RPC", 'buddypress' ) ?></a></li>
-    <?php } else { ?>
-        <li><a href="<?php echo wp_nonce_url( $bp->displayed_user->domain . 'admin/disable-xmlrpc/', 'bp_xmlrpc_disable_key' ) ?>" class="confirm"><?php _e( "Disable XML-RPC", 'buddypress' ) ?></a></li>
-    <?php }
-}
-add_action( 'bp_members_adminbar_admin_menu', 'bp_xmlrpc_adminbar_menu_items', 60 );
-// add_action( 'admin_bar_menu', 'bp_xmlrpc_adminbar_menu_items', 401 );
 
-// add apikey link to xprofile page
+    // User Admin > Remote access
+    $wp_admin_bar->add_menu( array(
+        'parent' => $bp->user_admin_menu_id,
+        'id'     => $bp->user_admin_menu_id . '-remote-access',
+        'title'  => __( 'Remote access', 'bp-xmlrpc' ),
+        'href'   => bp_displayed_user_domain() . 'settings/remote-access/'
+    ) );
+}
+add_action( 'admin_bar_menu', 'bp_xmlrpc_adminbar_menu_items', 100 );
+
+/**
+ * Add 'Remote access' option on user settings page.
+ *
+ * @return void
+ */
 function bp_xmlrpc_xprofile_setup_nav() {
     global $bp;
 
+    // XMLRPC disabled site-wide
     if ( !get_option( 'bp_xmlrpc_enabled' ) )
-        return false;
+        return;
 
-    if ( !isset( $bp->displayed_user->id ) )
-        return false;
+    // this is not a user profile page
+    if ( !bp_is_user() )
+        return;
 
     // loggedin as the admin should be able to override the settings
-    if ( !is_super_admin() && get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled') )
-        return false;
+    if ( !is_super_admin() && get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled' ) )
+        return;
 
-    if ( !current_user_can( get_option('bp_xmlrpc_cap_low') ) )
+    if ( !current_user_can( get_option( 'bp_xmlrpc_cap_low' ) ) )
         return;
 
     bp_core_new_subnav_item( array( 'name'            => __( 'Remote access', 'bp-xmlrpc' ),
@@ -100,13 +111,13 @@ function bp_xmlrpc_xprofile_screen_apikey() {
 
         } else {
             bp_core_add_message( __( 'Error: APIKey removed', 'bp-xmlrpc' ) );
-            delete_user_meta( $bp->displayed_user->id, "bp_xmlrpc_apikey");
+            delete_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_apikey' );
         }
     }
 
     if ( isset( $_POST['xmlrpc-apikey-remove-submit'] ) && check_admin_referer( 'bp_xmlrpc_remove_key' ) ) {
         bp_core_add_message( __( 'APIKey removed! - Remote Access has been disabled.', 'bp-xmlrpc' ) );
-        delete_user_meta( $bp->displayed_user->id, "bp_xmlrpc_apikey");
+        delete_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_apikey' );
     }
 
     add_action( 'bp_template_title', 'bp_xmlrpc_xprofile_screen_title' );
@@ -125,9 +136,43 @@ function bp_xmlrpc_xprofile_screen_content() {
 
     <h3><?php _e( 'Remote access', 'bp-xmlrpc' ); ?></h3>
 
-    <p><?php _e( 'You can access to features of BuddyPress by use of third-party tools.', 'bp-xmlrpc' ); ?></p>
+    <p><?php _e( 'You can access BuddyPress features by use of third-party tools and services.', 'bp-xmlrpc' ); ?></p>
+
+    <?php
+        $services = get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_services' );
+        $services = isset( $services[0] ) ? $services[0] : array();
+
+    if ( empty( $services ) ) {
+        echo '<p>' . __( "You don't have any connected service yet.", 'bp-xmlrpc' ) . '</p>';
+    }
+    else { ?>
 
     <p><?php _e( 'Here you can manage what services can access your account remotely.', 'bp-xmlrpc' ); ?></p>
+
+    <table class="form-table" style="text-align: left;">
+        <thead>
+            <tr>
+                <th><?php _e( 'Service', 'bp-xmlrpc' ); ?></th>
+                <th><?php _e( 'Added on', 'bp-xmlrpc' ); ?></th>
+                <th><?php _e( 'Remove', 'bp-xmlrpc' ); ?></th>
+            </tr>
+        </thead>
+        <tbody>
+
+        <?php foreach( $services as $service ) { ?>
+
+            <tr>
+                <th><?php echo $service['name']; ?></th>
+                <td><?php echo $service['created_at']; /* TODO: format */ ?></td>
+                <td><button><?php _e( 'Remove', 'bp-xmlrpc' ); /* TODO: implement */ ?></button></td>
+            </tr>
+
+        <?php } ?>
+
+        </tbody>
+    </table>
+
+    <?php } ?>
 
     <div class="clear"></div>
 

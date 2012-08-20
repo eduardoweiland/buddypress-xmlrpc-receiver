@@ -1,7 +1,5 @@
 * Need new authentication method (ApiKey sucks)
-  - oauth ?
-  - per device apikey ?
-  - ideas ?
+  - per device apikey
 * need limit rate
 * need max results (right now hardcoded at 35 per request)
 * more rpc commands

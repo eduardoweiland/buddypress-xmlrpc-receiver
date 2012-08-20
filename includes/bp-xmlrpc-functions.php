@@ -1,13 +1,5 @@
 <?php
 
-function bp_xmlrpc_bp_init() {
-
-    // we can call that directly ?
-    do_action('bp_init');
-
-}
-add_action('bp_xmlrpc_bp_init', 'bp_xmlrpc_bp_init');
-
 function bp_xmlrpc_calls_enabled_check( $type, $currenttypes ) {
     return in_array( $type, $currenttypes );
 }
@@ -23,11 +15,17 @@ function bp_xmlrpc_calls_enabled_check( $type, $currenttypes ) {
 function bp_xmlrpc_login_apikey_check( $password, $apikey, $user_login ) {
     $hash = hash_hmac( 'md5', $user_login, $password );
 
-    if ( $hash != $apikey ) {
-        return false;
+    return ( $hash == $apikey );
+}
+
+function bp_xmlrpc_get_service_enabled( $services, $name ) {
+    foreach ( $services as $key => $value ) {
+        if ( $name === $value['name'] ) {
+            return $key;
+        }
     }
 
-    return true;
+    return -1;
 }
 
 /**
@@ -36,10 +34,10 @@ function bp_xmlrpc_login_apikey_check( $password, $apikey, $user_login ) {
  * @param int $user_id The user's ID.
  * @return string A new generated key
  */
-function bp_xmlrpc_generate_apikey( $user_id ) {
+function bp_xmlrpc_generate_apikey( $user_id, $service ) {
     global $wp_hasher;
 
-    if ( !$user_id )
+    if ( !$user_id || !$service )
         return false;
 
     $user = get_user_by( 'id', $user_id );
@@ -47,12 +45,34 @@ function bp_xmlrpc_generate_apikey( $user_id ) {
     if ( !$user )
         return false;
 
-    $pass_frag = substr( $user->user_pass, 8, 4 );
+    $pass_frag  = substr( $user->user_pass, 8, 4 );
+    $created_at = gmdate( 'c' );
 
-    $key = wp_hash( $user->user_login . '|bp-xmlrpc|' . $pass_frag );
-    $apikey = hash_hmac('md5', $user->user_login, $key);
+    $key = wp_hash( $user->user_login . '+' . $service . '|bp-xmlrpc|' . $pass_frag . $created_at );
+    $apikey = hash_hmac( 'md5', $user->user_login . $service, $key );
 
-    update_user_meta( $user_id, 'bp_xmlrpc_apikey', $apikey );
+    $enabled = get_user_meta( $user_id, 'bp_xmlrpc_services' );
+    // get_user_meta puts all into index 0, so we're getting it back
+    $enabled = isset( $enabled[0] ) ? $enabled[0] : array();
+
+    $index = bp_xmlrpc_get_service_enabled( $enabled, $service );
+
+    // struct that we'll save in the database
+    $info = array(
+        'name'       => $service,
+        'apikey'     => $apikey,
+        'created_at' => $created_at,
+        'active'     => false        // the user still need to activate this service
+    );
+
+    if ( $index > -1 ) {
+        $enabled[$index] = $info;
+    }
+    else {
+        array_push( $enabled, $info );
+    }
+
+    update_user_meta( $user_id, 'bp_xmlrpc_services', $enabled );
 
     return $key;
 }
@@ -70,14 +90,14 @@ function bp_xmlrpc_apikey_notification_message( $key ) {
     // Set up and send the message
     $subject = '[' . get_blog_option( BP_ROOT_BLOG, 'blogname' ) . '] ' . __( 'XML-RPC APIKey', 'bp-xmlrpc' );
 
-    $message = __('Thank you for creating an APIKey for XML-RPC access to this site.', 'bp-xmlrpc' ) . "\r\n\r\n";
+    $message = __( 'Thank you for creating an APIKey for XML-RPC access to this site.', 'bp-xmlrpc' ) . "\r\n\r\n";
 
-    $message .= __('Remote API Connection details - please save this information for use in a third-party client:', 'bp-xmlrpc' ) . "\r\n\r\n";
-    $message .= sprintf( __('Username: %s', 'bp-xmlrpc' ), $user_name ) . "\r\n";
-    $message .= sprintf( __('APIKey (password): %s', 'bp-xmlrpc' ), $key ) . "\r\n";
-    $message .= sprintf( __('XML-RPC Url: %s', 'bp-xmlrpc' ), BP_XMLRPC_URL ) . "\r\n\r\n";
+    $message .= __( 'Remote API Connection details - please save this information for use in a third-party client:', 'bp-xmlrpc' ) . "\r\n\r\n";
+    $message .= sprintf( __( 'Username: %s', 'bp-xmlrpc' ), $user_name ) . "\r\n";
+    $message .= sprintf( __( 'APIKey (password): %s', 'bp-xmlrpc' ), $key ) . "\r\n";
+    $message .= sprintf( __( 'XML-RPC Url: %s', 'bp-xmlrpc' ), BP_XMLRPC_URL ) . "\r\n\r\n";
 
-    $message .= sprintf( __('You may change these settings at: %s', 'bp-xmlrpc' ), $api_link ) . "\r\n";
+    $message .= sprintf( __( 'You may change these settings at: %s', 'bp-xmlrpc' ), $api_link ) . "\r\n";
 
     /* Send the message */
     $message = apply_filters( 'bp_xmlrpc_apikey_notification_message', $message, $user_name, $key, BP_XMLRPC_URL, $api_link );
@@ -97,7 +117,7 @@ function bp_xmlrpc_apikey_disabled_message( ) {
     // Set up and send the message
     $subject = '[' . get_blog_option( BP_ROOT_BLOG, 'blogname' ) . '] ' . __( 'Disabled XML-RPC APIKey', 'bp-xmlrpc' );
 
-    $message = __('The site administrator has disabled your remote access via XML-RPC to this site.', 'bp-xmlrpc' ) . "\r\n\r\n";
+    $message = __( 'The site administrator has disabled your remote access via XML-RPC to this site.', 'bp-xmlrpc' ) . "\r\n\r\n";
 
     /* Send the message */
     $message = apply_filters( 'bp_xmlrpc_apikey_disabled_message', $message );
@@ -120,9 +140,9 @@ function bp_xmlrpc_apikey_enable_message( ) {
     // Set up and send the message
     $subject = '[' . get_blog_option( BP_ROOT_BLOG, 'blogname' ) . '] ' . __( 'Enabled XML-RPC APIKey', 'bp-xmlrpc' );
 
-    $message = __('The site administrator has re-enabled your remote access via XML-RPC to this site.', 'bp-xmlrpc' ) . "\r\n\r\n";
+    $message = __( 'The site administrator has re-enabled your remote access via XML-RPC to this site.', 'bp-xmlrpc' ) . "\r\n\r\n";
 
-    $message .= sprintf( __('You may generate a new APIKey at: %s', 'bp-xmlrpc' ), $api_link ) . "\r\n";
+    $message .= sprintf( __( 'You may generate a new APIKey at: %s', 'bp-xmlrpc' ), $api_link ) . "\r\n";
 
     /* Send the message */
     $message = apply_filters( 'bp_xmlrpc_apikey_disabled_message', $message, $api_link );
@@ -134,6 +154,7 @@ function bp_xmlrpc_apikey_enable_message( ) {
 function bp_xmlrpc_get_followers_recently_active( $user_id, $per_page = false, $page = false, $filter ) {
     return apply_filters( 'followers_get_recently_active', BP_Core_User::get_users( 'active', $per_page, $page, $user_id, $filter ) );
 }
+
 function bp_xmlrpc_get_following_recently_active( $user_id, $per_page = false, $page = false, $filter ) {
     return apply_filters( 'following_get_recently_active', BP_Core_User::get_users( 'active', $per_page, $page, $user_id, $filter ) );
 }

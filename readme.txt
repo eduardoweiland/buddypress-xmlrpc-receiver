@@ -1,9 +1,9 @@
 === BuddyPress XML-RPC Receiver ===
 Contributors: nuprn1, duduweiland
 Donate link:
-Tags: buddypress, xmlrpc, xml-rpc, activity stream, activity
+Tags: buddypress, xmlrpc, xml-rpc, activity stream, activity, remote access
 Requires at least: PHP 5.2, WordPress 3.4.0, BuddyPress 1.5.6
-Tested up to: PHP 5.4.4, WordPress 3.4.1, BuddyPress 1.5.6
+Tested up to: PHP 5.4.4, WordPress 3.4.1, BuddyPress 1.6.1
 Stable tag: 0.1.0
 License: GPLv3
 
@@ -79,4 +79,4 @@ None yet.
 
 == Upgrade Notice ==
 
-No extra configuration is needed.
+This version is completely incompatible with the previous one.
