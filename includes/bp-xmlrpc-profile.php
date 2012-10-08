@@ -17,11 +17,10 @@ function bp_xmlrpc_set_disabled_status() {
         bp_core_add_message( __( 'Remote access has been disabled.', 'bp-xmlrpc' ) );
 
         // set the access
-        //delete_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_apikey' );
         update_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled', true );
 
         // inform the user
-        bp_xmlrpc_apikey_disabled_message();
+        //bp_xmlrpc_apikey_disabled_message();
 
         bp_core_redirect( wp_get_referer() );
 
@@ -36,7 +35,7 @@ function bp_xmlrpc_set_disabled_status() {
         delete_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled' );
 
         // re-inform the user
-        bp_xmlrpc_apikey_enable_message();
+        //bp_xmlrpc_apikey_enable_message();
 
         bp_core_redirect( wp_get_referer() );
     }
@@ -44,7 +43,29 @@ function bp_xmlrpc_set_disabled_status() {
 }
 add_action( 'wp', 'bp_xmlrpc_set_disabled_status', 3 );
 
-// add profile admin options to disable on a per user basis
+/**
+ * Manipulates services approvals, rejections and removes.
+ */
+function bp_xmlrpc_set_services() {
+    global $bp;
+
+    if ( !is_super_admin() || !bp_is_user() || !bp_is_my_profile() )
+        return;
+
+    if ( 'settings' !== $bp->current_component )
+        return;
+
+    if ( 'remote-acess-approve' == $bp->current_action ) {
+        bp_core_add_message( __( 'Remote access has been enabled.', 'bp-xmlrpc' ) );
+    }
+}
+add_action( 'wp', 'bp_xmlrpc_set_services', 4 );
+
+/**
+ * Add settings link in adminbar when viewing user profiles (only for admins).
+ *
+ * @return void
+ */
 function bp_xmlrpc_adminbar_menu_items() {
     global $bp, $wp_admin_bar;
 
@@ -52,7 +73,7 @@ function bp_xmlrpc_adminbar_menu_items() {
     if ( !is_super_admin() || !bp_is_user() || bp_is_my_profile() )
         return;
 
-    // User Admin > Remote access
+    // Edit Member > Remote access
     $wp_admin_bar->add_menu( array(
         'parent' => $bp->user_admin_menu_id,
         'id'     => $bp->user_admin_menu_id . '-remote-access',
@@ -63,7 +84,7 @@ function bp_xmlrpc_adminbar_menu_items() {
 add_action( 'admin_bar_menu', 'bp_xmlrpc_adminbar_menu_items', 100 );
 
 /**
- * Add 'Remote access' option on user settings page.
+ * Add 'Remote access' option on user's settings page.
  *
  * @return void
  */
@@ -74,7 +95,7 @@ function bp_xmlrpc_xprofile_setup_nav() {
     if ( !get_option( 'bp_xmlrpc_enabled' ) )
         return;
 
-    // this is not a user profile page
+    // this is not a user settings page
     if ( !bp_is_user() )
         return;
 
@@ -82,6 +103,7 @@ function bp_xmlrpc_xprofile_setup_nav() {
     if ( !is_super_admin() && get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_disabled' ) )
         return;
 
+    // disabled by capability
     if ( !current_user_can( get_option( 'bp_xmlrpc_cap_low' ) ) )
         return;
 
@@ -96,6 +118,9 @@ function bp_xmlrpc_xprofile_setup_nav() {
 add_action( 'bp_setup_nav', 'bp_xmlrpc_xprofile_setup_nav', 4 );
 
 
+/**
+ * @deprecated
+ */
 //xprofile page to change user signature
 function bp_xmlrpc_xprofile_screen_apikey() {
     global $bp;
@@ -107,7 +132,7 @@ function bp_xmlrpc_xprofile_screen_apikey() {
         if ( $key ) {
             bp_core_add_message( __( 'New APIKey Generated: '. $key, 'bp-xmlrpc' ) );
 
-            bp_xmlrpc_apikey_notification_message( $key );
+            //bp_xmlrpc_apikey_notification_message( $key );
 
         } else {
             bp_core_add_message( __( 'Error: APIKey removed', 'bp-xmlrpc' ) );
@@ -127,27 +152,67 @@ function bp_xmlrpc_xprofile_screen_apikey() {
 }
 
 function bp_xmlrpc_xprofile_screen_title() {
-    __( 'Remote access', 'bp-xmlrpc' );
+    _e( 'Remote access', 'bp-xmlrpc' );
 }
 
 function bp_xmlrpc_xprofile_screen_content() {
     global $bp;
 ?>
 
-    <h3><?php _e( 'Remote access', 'bp-xmlrpc' ); ?></h3>
-
     <p><?php _e( 'You can access BuddyPress features by use of third-party tools and services.', 'bp-xmlrpc' ); ?></p>
 
     <?php
-        $services = get_user_meta( $bp->displayed_user->id, 'bp_xmlrpc_services' );
-        $services = isset( $services[0] ) ? $services[0] : array();
+    $pending = bp_xmlrpc_get_pending_services( $bp->displayed_user->id );
+
+    if ( !empty( $pending ) ) { ?>
+
+    <h4><?php _e( 'Services waiting approval', 'bp-xmlrpc' ); ?></h4>
+
+    <p><?php _e( 'These services are awaiting your approval before they can connect to your account.', 'bp-xmlrpc' ); ?></p>
+
+    <table class="form-table" style="text-align: left;">
+        <thead>
+            <tr>
+                <th><?php _e( 'Service', 'bp-xmlrpc' ); ?></th>
+                <th><?php _e( 'Added on', 'bp-xmlrpc' ); ?></th>
+                <th><?php _e( 'Action', 'bp-xmlrpc' ); ?></th>
+            </tr>
+        </thead>
+        <tbody>
+
+        <?php foreach ( $pending as $ps ) { ?>
+
+            <tr>
+                <th><?php echo $ps['name']; ?></th>
+                <td><?php echo date_i18n( get_option( 'date_format' ), $ps['created_at'] ); ?></td>
+                <td>
+                    <a href="<?php echo wp_nonce_url( $bp->displayed_user->domain .
+                        $bp->settings->slug . '/remote-acess-approve/' . $ps['id'] ); ?>"
+                        class="button"><?php _e( 'Approve', 'bp-xmlrpc' ); ?></a>
+                    <a href="<?php echo wp_nonce_url( $bp->displayed_user->domain .
+                        $bp->settings->slug . '/remote-acess-reject/' . $ps['id'] ); ?>"
+                        class="button"><?php _e( 'Reject',  'bp-xmlrpc' ); ?></a>
+                </td>
+            </tr>
+
+        <?php } ?>
+
+        </tbody>
+    </table>
+
+    <?php
+    }   // $pending
+
+    $services = bp_xmlrpc_get_allowed_services( $bp->displayed_user->id );
 
     if ( empty( $services ) ) {
         echo '<p>' . __( "You don't have any connected service yet.", 'bp-xmlrpc' ) . '</p>';
     }
     else { ?>
 
-    <p><?php _e( 'Here you can manage what services can access your account remotely.', 'bp-xmlrpc' ); ?></p>
+    <h4><?php _e( 'Allowed services', 'bp-xmlrpc' ); ?></h4>
+
+    <p><?php _e( 'You have granted remote access to your account to the following services.', 'bp-xmlrpc' ); ?></p>
 
     <table class="form-table" style="text-align: left;">
         <thead>
@@ -163,8 +228,11 @@ function bp_xmlrpc_xprofile_screen_content() {
 
             <tr>
                 <th><?php echo $service['name']; ?></th>
-                <td><?php echo $service['created_at']; /* TODO: format */ ?></td>
-                <td><button><?php _e( 'Remove', 'bp-xmlrpc' ); /* TODO: implement */ ?></button></td>
+                <td><?php echo date_i18n( get_option( 'date_format' ), $service['created_at'] ); ?></td>
+                <td><a href="<?php echo wp_nonce_url( $bp->displayed_user->domain .
+                    $bp->settings->slug . '/remote-acess-remove/' . $service['id'] ); ?>"
+                    class="button confirm"><?php _e( 'Remove', 'bp-xmlrpc' ); ?></a>
+                </td>
             </tr>
 
         <?php } ?>

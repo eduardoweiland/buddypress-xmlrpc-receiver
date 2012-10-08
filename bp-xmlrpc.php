@@ -19,7 +19,7 @@ if ( !isset( $HTTP_RAW_POST_DATA ) ) {
     $HTTP_RAW_POST_DATA = file_get_contents( 'php://input' );
 }
 
-// fix for mozBlog and other cases where xml isn't on the very first line
+// fix for cases where xml isn't on the very first line
 if ( isset( $HTTP_RAW_POST_DATA ) )
     $HTTP_RAW_POST_DATA = trim( $HTTP_RAW_POST_DATA );
 
@@ -84,12 +84,12 @@ class bp_xmlrpc_server extends IXR_Server {
             // get notifications
             'bp.getNotifications'               => 'this:bp_xmlrpc_call_get_notifications',
 
-            // when wp plugin is first setup - check connection
-            'bp.requestApiKey'                  => 'this:bp_xmlrpc_call_request_apikey',
-            'bp.verifyConnection'               => 'this:bp_xmlrpc_call_verify_connection',
-
             // get recent statuses
             'bp.getActivity'                    => 'this:bp_xmlrpc_call_get_activity',
+
+            // for services connecting: request ApiKey and verify it
+            'bp.requestApiKey'                  => 'this:bp_xmlrpc_call_request_apikey',
+            'bp.verifyConnection'               => 'this:bp_xmlrpc_call_verify_connection',
         );
 
         $this->methods = apply_filters( 'bp_xmlrpc_methods', $this->methods );
@@ -277,11 +277,23 @@ class bp_xmlrpc_server extends IXR_Server {
 
         $post_permalink = $this->escape( $data['blogpostpermalink'] );
 
-        $activity_action = sprintf( __( '%s wrote a new blog post: %s', 'bp-xmlrpc' ), bp_core_get_userlink( $bp->loggedin_user->id ), '<a href="' . $post_permalink . '">' . $this->escape( apply_filters( 'bp_xmlrpc_blog_new_post_title', $data['blogtitle'] ) ) . '</a>' );
+        $activity_action = sprintf( __( '%s wrote a new blog post: %s', 'bp-xmlrpc' ),
+            bp_core_get_userlink( $bp->loggedin_user->id ),
+            '<a href="' . $post_permalink . '">' . $this->escape( apply_filters( 'bp_xmlrpc_blog_new_post_title', $data['blogtitle'] ) ) . '</a>' );
+
         $activity_content = $this->escape( $data['status'] );
 
         /* Record this in activity streams */
-        if ( $activity['activity_id'] = bp_blogs_record_activity( array( 'user_id' => $bp->loggedin_user->id, 'action' => apply_filters( 'bp_xmlrpc_blog_new_post_action', $activity_action ), 'content' => apply_filters( 'bp_xmlrpc_blog_new_post_content', $activity_content ), 'primary_link' => $post_permalink, 'type' => 'new_xmlrpc_blog_post', 'secondary_item_id' => $this->escape( $data['blogpostid'] ) ) ) ) {
+        $activity['activity_id'] = bp_blogs_record_activity( array(
+            'user_id'           => $bp->loggedin_user->id,
+            'action'            => apply_filters( 'bp_xmlrpc_blog_new_post_action', $activity_action ),
+            'content'           => apply_filters( 'bp_xmlrpc_blog_new_post_content', $activity_content ),
+            'primary_link'      => $post_permalink,
+            'type'              => 'new_xmlrpc_blog_post',
+            'secondary_item_id' => $this->escape( $data['blogpostid'] )
+        ) );
+
+        if ( $activity['activity_id'] ) {
 
             $activity['message'] = __( 'Blog Update Posted!', 'bp-xmlrpc' );
             $activity['confirmation'] = true;
@@ -722,10 +734,11 @@ class bp_xmlrpc_server extends IXR_Server {
      * Log user in.
      *
      * @param string $username User's username.
+     * @param string $service  The service trying to connect.
      * @param string $apikey   User's apikey.
      * @return mixed WP_User object if authentication passed, false otherwise
      */
-    function login( $username, $apikey ) {
+    function login( $username, $service, $apikey ) {
         global $bp;
 
         if ( !get_option( 'bp_xmlrpc_enabled' ) ) {
@@ -748,12 +761,6 @@ class bp_xmlrpc_server extends IXR_Server {
             return false;
         }
 
-        //no apikey defined so service is disabled
-        if ( !$userdata->bp_xmlrpc_apikey ) {
-            $this->error = new IXR_Error( 405, __( 'XML-RPC services disabled on this user.', 'bp-xmlrpc' ) );
-            return false;
-        }
-
         //high level disable
         if ( get_user_meta( $userdata->ID, 'bp_xmlrpc_disabled' ) ) {
             $this->error = new IXR_Error( 405, __( 'XML-RPC services disabled on this user.', 'bp-xmlrpc' ) );
@@ -761,7 +768,7 @@ class bp_xmlrpc_server extends IXR_Server {
         }
 
         //match the keys
-        if ( !bp_xmlrpc_login_apikey_check( $apikey, $userdata->bp_xmlrpc_apikey, $userdata->user_login ) ) {
+        if ( !bp_xmlrpc_login_apikey_check( $userdata->ID, $service, $apikey ) ) {
             $this->error = new IXR_Error( 403, __( 'Bad login/pass combination.', 'bp-xmlrpc' ) );
             return false;
         }
