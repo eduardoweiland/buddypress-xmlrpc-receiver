@@ -41,25 +41,79 @@ function bp_xmlrpc_set_disabled_status() {
     }
 
 }
-add_action( 'wp', 'bp_xmlrpc_set_disabled_status', 3 );
+//add_action( 'wp', 'bp_xmlrpc_set_disabled_status', 3 );
 
 /**
  * Manipulates services approvals, rejections and removes.
  */
-function bp_xmlrpc_set_services() {
+function bp_xmlrpc_service_set_allowed() {
     global $bp;
 
-    if ( !is_super_admin() || !bp_is_user() || !bp_is_my_profile() )
+    if ( !is_super_admin() && !bp_is_my_profile() )
         return;
 
     if ( 'settings' !== $bp->current_component )
         return;
 
-    if ( 'remote-acess-approve' == $bp->current_action ) {
-        bp_core_add_message( __( 'Remote access has been enabled.', 'bp-xmlrpc' ) );
+    $serviceId = isset( $bp->action_variables[0] ) ? $bp->action_variables[0] : null;
+    $services  = bp_xmlrpc_get_services( $bp->displayed_user->id );
+
+    // no service, do nothing
+    if ( !$serviceId )
+        return;
+
+    // approve a service
+    if ( 'remote-access-approve' == $bp->current_action ) {
+        $name = '';
+        // find the service by ID
+        foreach ( $services as &$service ) {
+            if ( $serviceId === $service['id'] ) {
+                $service['allowed'] = true;
+                $name = $service['name'];
+            }
+        }
+
+        bp_xmlrpc_set_services( $bp->displayed_user->id, $services );
+
+        bp_core_add_message( sprintf( __( 'Remote service %s has been approved.', 'bp-xmlrpc' ), $name ) );
+        bp_core_redirect( wp_get_referer() );
+    }
+    // reject a service
+    elseif ( 'remote-access-reject' == $bp->current_action ) {
+        $name = '';
+        // find the service by ID
+        foreach ( $services as $index => $service ) {
+            if ( $serviceId === $service['id'] ) {
+                $name = $service['name'];
+                unset( $services[$index] );
+            }
+        }
+
+        $services = array_values( $services );
+        bp_xmlrpc_set_services( $bp->displayed_user->id, $services );
+
+        bp_core_add_message( sprintf( __( 'Remote service %s has been rejected.', 'bp-xmlrpc' ), $name ) );
+        bp_core_redirect( wp_get_referer() );
+    }
+    // remove a service that have been allowed
+    elseif ( 'remote-access-remove' == $bp->current_action ) {
+        $name = '';
+        // find the service by ID
+        foreach ( $services as $index => $service ) {
+            if ( $serviceId === $service['id'] ) {
+                $name = $service['name'];
+                unset( $services[$index] );
+            }
+        }
+
+        $services = array_values( $services );
+        bp_xmlrpc_set_services( $bp->displayed_user->id, $services );
+
+        bp_core_add_message( sprintf( __( 'Remote service %s has been removed.', 'bp-xmlrpc' ), $name ) );
+        bp_core_redirect( wp_get_referer() );
     }
 }
-add_action( 'wp', 'bp_xmlrpc_set_services', 4 );
+add_action( 'wp', 'bp_xmlrpc_service_set_allowed', 3 );
 
 /**
  * Add settings link in adminbar when viewing user profiles (only for admins).
@@ -115,7 +169,7 @@ function bp_xmlrpc_xprofile_setup_nav() {
                                     'position'        => 30,
                                     'user_has_access' => bp_is_my_profile() || is_super_admin() ) );
 }
-add_action( 'bp_setup_nav', 'bp_xmlrpc_xprofile_setup_nav', 4 );
+add_action( 'bp_setup_nav', 'bp_xmlrpc_xprofile_setup_nav', 30 );
 
 
 /**
@@ -180,17 +234,18 @@ function bp_xmlrpc_xprofile_screen_content() {
         </thead>
         <tbody>
 
-        <?php foreach ( $pending as $ps ) { ?>
+        <?php foreach ( $pending as $index => $ps ) { ?>
 
-            <tr>
-                <th><?php echo $ps['name']; ?></th>
+            <?php printf( '<tr %s>', ( $index % 2 === 1 ) ? 'class="alt"' : '' ); ?>
+
+                <td><?php echo $ps['name']; ?></td>
                 <td><?php echo date_i18n( get_option( 'date_format' ), $ps['created_at'] ); ?></td>
                 <td>
                     <a href="<?php echo wp_nonce_url( $bp->displayed_user->domain .
-                        $bp->settings->slug . '/remote-acess-approve/' . $ps['id'] ); ?>"
+                        $bp->settings->slug . '/remote-access-approve/' . $ps['id'] ); ?>"
                         class="button"><?php _e( 'Approve', 'bp-xmlrpc' ); ?></a>
                     <a href="<?php echo wp_nonce_url( $bp->displayed_user->domain .
-                        $bp->settings->slug . '/remote-acess-reject/' . $ps['id'] ); ?>"
+                        $bp->settings->slug . '/remote-access-reject/' . $ps['id'] ); ?>"
                         class="button"><?php _e( 'Reject',  'bp-xmlrpc' ); ?></a>
                 </td>
             </tr>
@@ -206,7 +261,7 @@ function bp_xmlrpc_xprofile_screen_content() {
     $services = bp_xmlrpc_get_allowed_services( $bp->displayed_user->id );
 
     if ( empty( $services ) ) {
-        echo '<p>' . __( "You don't have any connected service yet.", 'bp-xmlrpc' ) . '</p>';
+        echo '<br/><p>' . __( "You don't have any connected service yet.", 'bp-xmlrpc' ) . '</p>';
     }
     else { ?>
 
@@ -227,10 +282,10 @@ function bp_xmlrpc_xprofile_screen_content() {
         <?php foreach( $services as $service ) { ?>
 
             <tr>
-                <th><?php echo $service['name']; ?></th>
+                <td><?php echo $service['name']; ?></td>
                 <td><?php echo date_i18n( get_option( 'date_format' ), $service['created_at'] ); ?></td>
                 <td><a href="<?php echo wp_nonce_url( $bp->displayed_user->domain .
-                    $bp->settings->slug . '/remote-acess-remove/' . $service['id'] ); ?>"
+                    $bp->settings->slug . '/remote-access-remove/' . $service['id'] ); ?>"
                     class="button confirm"><?php _e( 'Remove', 'bp-xmlrpc' ); ?></a>
                 </td>
             </tr>

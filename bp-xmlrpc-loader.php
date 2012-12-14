@@ -54,7 +54,11 @@ function bp_xmlrpc_admin_add_admin_menu() {
     // Add the component's administration tab under the "Settings" menu for site administrators
     require ( dirname( __FILE__ ) . '/admin/bp-xmlrpc-admin.php' );
 
-    add_options_page( __( 'BuddyPress XML-RPC', 'bp-xmlrpc' ), __( 'BuddyPress XML-RPC', 'bp-xmlrpc' ), 'manage_options', 'bp-xmlrpc-settings', 'bp_xmlrpc_admin' );
+    add_options_page( __( 'BuddyPress XML-RPC', 'bp-xmlrpc' ),
+                      __( 'BuddyPress XML-RPC', 'bp-xmlrpc' ),
+                      'manage_options',
+                      'bp-xmlrpc-settings',
+                      'bp_xmlrpc_admin' );
 
     // set up defaults
     add_option( 'bp_xmlrpc_cap_low', 'upload_files' ); // author

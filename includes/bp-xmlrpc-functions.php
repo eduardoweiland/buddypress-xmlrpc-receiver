@@ -21,6 +21,17 @@ function bp_xmlrpc_get_service_exists( $services, $name ) {
     return -1;
 }
 
+function bp_xmlrpc_get_services( $user_id ) {
+    $services = get_user_meta( $user_id, 'bp_xmlrpc_services' );
+
+    // get_user_meta puts all into index 0, so we're getting it back
+    return isset( $services[0] ) ? $services[0] : array();
+}
+
+function bp_xmlrpc_set_services( $user_id, $services ) {
+    return update_user_meta( $user_id, 'bp_xmlrpc_services', $services );
+}
+
 /**
  * Gets a list of all allowed services.
  * These are the services the user have explicitly allowed to connect.
@@ -33,10 +44,8 @@ function bp_xmlrpc_get_allowed_services( $user_id ) {
         return false;
     }
 
-    $services = get_user_meta( $user_id, 'bp_xmlrpc_services' );
-    $services = isset( $services[0] ) ? $services[0] : array();
-
-    $allowed = array();
+    $services = bp_xmlrpc_get_services( $user_id );
+    $allowed  = array();
 
     foreach ( $services as $service ) {
         if ( isset( $service['allowed'] ) && $service['allowed'] ) {
@@ -60,10 +69,8 @@ function bp_xmlrpc_get_pending_services( $user_id ) {
         return false;
     }
 
-    $services = get_user_meta( $user_id, 'bp_xmlrpc_services' );
-    $services = isset( $services[0] ) ? $services[0] : array();
-
-    $pending = array();
+    $services = bp_xmlrpc_get_services( $user_id );
+    $pending  = array();
 
     foreach ( $services as $service ) {
         if ( !isset( $service['allowed'] ) || !$service['allowed'] ) {
@@ -85,7 +92,7 @@ function bp_xmlrpc_get_pending_services( $user_id ) {
 function bp_xmlrpc_login_apikey_check( $user_id, $service, $key ) {
     $user    = get_user_by( 'id', $user_id );
     $enabled = bp_xmlrpc_get_allowed_services( $user_id );
-    $index   = bp_xmlrpc_get_service_exits( $enabled, $service );
+    $index   = bp_xmlrpc_get_service_exists( $enabled, $service );
 
     // unknown user or service
     if ( !$user || $index === -1 ) {
@@ -124,31 +131,32 @@ function bp_xmlrpc_generate_apikey( $user_id, $service ) {
     $key = wp_hash( $user->user_login . '+' . $service . '|bp-xmlrpc|' . $pass_frag . $created_at );
     $apikey = hash_hmac( 'md5', $user->user_login . $service, $key );
 
-    $enabled = get_user_meta( $user_id, 'bp_xmlrpc_services' );
-    // get_user_meta puts all into index 0, so we're getting it back
-    $enabled = isset( $enabled[0] ) ? $enabled[0] : array();
+    $services = bp_xmlrpc_get_services( $user_id );
 
     // struct that we'll save in the database
     $info = array(
-        'id'         => 0,  // TODO
+        'id'         => 1,
         'name'       => $service,
         'apikey'     => $apikey,
         'created_at' => $created_at,
         'allowed'    => false        // the user still need to allow this service
     );
 
-    $index = bp_xmlrpc_get_service_exists( $enabled, $service );
+    $index = bp_xmlrpc_get_service_exists( $services, $service );
 
     // update existing service
     if ( $index > -1 ) {
-        $enabled[$index] = $info;
+        $info['id'] = $services[$index]['id'];   // use the same ID  
+        $services[$index] = $info;
     }
     // or add a new one
     else {
-        array_push( $enabled, $info );
+        $size = count( $services );
+        $info['id'] = $size > 0 ? $services[$size - 1]['id'] + 1 : 1;  // get the last used ID +1 
+        array_push( $services, $info );
     }
 
-    update_user_meta( $user_id, 'bp_xmlrpc_services', $enabled );
+    bp_xmlrpc_set_services( $user_id, $services );
 
     return $key;
 }

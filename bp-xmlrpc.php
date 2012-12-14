@@ -141,27 +141,29 @@ class bp_xmlrpc_server extends IXR_Server {
     /**
      * Verify xmlrpc handshake
      *
-     * @param array $args ($username, $password)
+     * @param array $args ($username, $service, $apikey)
      * @return array (confirmation, message);
      */
     function bp_xmlrpc_call_verify_connection( $args ) {
         global $bp;
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$this->login( $username, $service, $apikey ) )
             return $this->error;
 
-
         if ( $bp->loggedin_user->id ) {
-            return array( 'confirmation' => true, 'message' => 'Hello '. bp_core_get_user_displayname( $bp->loggedin_user->id ) );
+            return array(
+                'confirmation' => true,
+                'message'      => 'Hello '. bp_core_get_user_displayname( $bp->loggedin_user->id )
+            );
         }
 
         return new IXR_Error( 1500, __( 'There was an error connecting, please try again.', 'bp-xmlrpc' ) );
     }
-
 
     /**
      * Get notifications.
@@ -178,21 +180,29 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 405, __( 'XML-RPC call bp.getNotifications is disabled. ', 'bp-xmlrpc' ) );
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$this->login( $username, $service, $apikey ) )
             return $this->error;
 
-        if ( $notifications = bp_core_get_notifications_for_user( $bp->loggedin_user->id ) ) {
-            return array( 'confirmation' => true, 'message' => (array) $notifications );
+        $notifications = (array) bp_core_get_notifications_for_user( $bp->loggedin_user->id );
+
+        if ( $notifications ) {
+            return array(
+                'confirmation' => true,
+                'message' => (array) $notifications
+            );
         } else {
-            return array( 'confirmation' => true, 'message' => __( 'No new notifications.', 'bp-xmlrpc' ) );
+            return array(
+                'confirmation' => true,
+                'message' => __( 'No new notifications.', 'bp-xmlrpc' )
+            );
         }
 
         return new IXR_Error( 1500, __( 'There was an error connecting, please try again.', 'bp-xmlrpc' ) );
     }
-
 
     /**
      * Add activity stream profile status.
@@ -210,20 +220,23 @@ class bp_xmlrpc_server extends IXR_Server {
 
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
-        $data = $args[2];
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
+        $data     = $args[3];
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$this->login( $username, $service, $apikey ) )
             return $this->error;
-
 
         if ( !$data['status'] )
             return new IXR_Error( 1550, __( 'Invalid Request - Missing content', 'bp-xmlrpc' ) );
 
-        /* Record this in activity streams */
-        if ( $activity['activity_id'] = bp_activity_post_update( array( 'content' => apply_filters( 'bp_xmlrpc_update_profile_status_content', $this->escape( $data['status'] ) ) ) ) ) {
+        // Record this in activity streams
+        $activity['activity_id'] = bp_activity_post_update( array(
+            'content' => apply_filters( 'bp_xmlrpc_update_profile_status_content', $this->escape( $data['status'] ) )
+        ) );
 
+        if ( $activity['activity_id'] ) {
             $activity['message'] = __( 'Profile Update Posted!', 'bp-xmlrpc' );
             $activity['confirmation'] = true;
             $activity['url'] = bp_activity_get_permalink( $activity['activity_id'] );
@@ -249,11 +262,12 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 405, __( 'XML-RPC call bp.updateExternalBlogPostStatus is disabled. ', 'bp-xmlrpc' ) );
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
-        $data = $args[2];
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
+        $data     = $args[3];
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$user = $this->login( $username, $service, $apikey ) )
             return $this->error;
 
 
@@ -322,11 +336,12 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 405, __( 'XML-RPC call bp.deleteExternalBlogPostStatus is disabled. ', 'bp-xmlrpc' ) );
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
-        $data = $args[2];
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
+        $data     = $args[3];
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$user = $this->login( $username, $service, $apikey ) )
             return $this->error;
 
 
@@ -337,10 +352,16 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 1553, __( 'Invalid Request - Missing content', 'bp-xmlrpc' ) );
 
         /* Record this in activity streams */
-        if ( $activity['confirmation'] = bp_activity_delete( array( 'id' => $this->escape( $data['activityid'] ), 'user_id' => $bp->loggedin_user->id, 'secondary_item_id' => $this->escape( $data['blogpostid'] ), 'component' => $bp->blogs->id, 'type' => 'new_xmlrpc_blog_post' ) ) ) {
+        $activity['confirmation'] = bp_activity_delete( array(
+            'id'                => $this->escape( $data['activityid'] ),
+            'user_id'           => $bp->loggedin_user->id,
+            'secondary_item_id' => $this->escape( $data['blogpostid'] ),
+            'component'         => $bp->blogs->id,
+            'type'              => 'new_xmlrpc_blog_post'
+        ) );
 
+        if ( $activity['confirmation'] ) {
             $activity['message'] = __( 'Update Removed!', 'bp-xmlrpc' );
-
             return $activity;
         } else {
             return new IXR_Error( 1554, __( 'Activity not found', 'bp-xmlrpc' ) );
@@ -366,10 +387,11 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 405, __( 'XML-RPC call bp.getMyFriends is disabled.', 'bp-xmlrpc' ) );
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$user = $this->login( $username, $service, $apikey ) )
             return $this->error;
 
         if ( $friends = friends_get_recently_active( $bp->loggedin_user->id, $per_page = 35, $page = 1 ) ) {
@@ -430,10 +452,11 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 405, __( 'BuddyPress Followers plugin is not activated.', 'bp-xmlrpc' ) );
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$user = $this->login( $username, $service, $apikey ) )
             return $this->error;
 
         if ( $following = bp_xmlrpc_get_following_recently_active( $bp->loggedin_user->id, $per_page = 35, $page = 1, $filter = implode( ',', (array)BP_Follow::get_following( $bp->loggedin_user->id ) ) ) ) {
@@ -493,10 +516,11 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 405, __( 'BuddyPress Followers is not activated.', 'bp-xmlrpc' ) );
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$user = $this->login( $username, $service, $apikey ) )
             return $this->error;
 
         if ( $followers = bp_xmlrpc_get_following_recently_active( $bp->loggedin_user->id, $per_page = 35, $page = 1, $filter = implode( ',', (array)BP_Follow::get_followers( $bp->loggedin_user->id ) ) ) ) {
@@ -556,10 +580,11 @@ class bp_xmlrpc_server extends IXR_Server {
             return new IXR_Error( 405, __( 'XML-RPC call bp.getMyFriends is disabled.', 'bp-xmlrpc' ) );
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$user = $this->login( $username, $service, $apikey ) )
             return $this->error;
 
         if ( $groups = groups_get_groups( array( 'user_id' => $bp->loggedin_user->id, 'per_page' => 35, 'page' => 1, 'populate_extras' => false ) ) ) {
@@ -621,11 +646,12 @@ class bp_xmlrpc_server extends IXR_Server {
 
 
         // Parse the arguments, assuming they're in the correct order
-        $username   = $this->escape( $args[0] );
-        $password   = $this->escape( $args[1] );
-        $data = $args[2];
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
+        $data     = $args[3];
 
-        if ( !$user = $this->login( $username, $password ) )
+        if ( !$user = $this->login( $username, $service, $apikey ) )
             return $this->error;
 
         if ( !$data['scope'] )
@@ -792,7 +818,8 @@ class bp_xmlrpc_server extends IXR_Server {
         //    return $this->error;
 
         // awaken bp
-        do_action( 'bp_init' );
+        if ( !defined( BP_VERSION ) )
+            do_action( 'bp_init' );
 
         if ( !$bp->loggedin_user->id ) {
             $this->error = new IXR_Error( 1512, __( 'Invalid Request - User', 'bp-xmlrpc' ) );

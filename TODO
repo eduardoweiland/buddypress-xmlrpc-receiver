@@ -1,5 +1,6 @@
-* Need new authentication method (ApiKey sucks)
-  - per device apikey
+* AUTH:
+  - inform correctly when the service exits but it's not allowed yet 
+
 * need limit rate
 * need max results (right now hardcoded at 35 per request)
 * more rpc commands
