@@ -67,7 +67,7 @@ function bp_xmlrpc_service_set_allowed() {
         $name = '';
         // find the service by ID
         foreach ( $services as &$service ) {
-            if ( $serviceId === $service['id'] ) {
+            if ( (int)$serviceId === (int)$service['id'] ) {
                 $service['allowed'] = true;
                 $name = $service['name'];
             }
@@ -83,7 +83,7 @@ function bp_xmlrpc_service_set_allowed() {
         $name = '';
         // find the service by ID
         foreach ( $services as $index => $service ) {
-            if ( $serviceId === $service['id'] ) {
+            if ( (int)$serviceId === (int)$service['id'] ) {
                 $name = $service['name'];
                 unset( $services[$index] );
             }
@@ -100,7 +100,7 @@ function bp_xmlrpc_service_set_allowed() {
         $name = '';
         // find the service by ID
         foreach ( $services as $index => $service ) {
-            if ( $serviceId === $service['id'] ) {
+            if ( (int)$serviceId === (int)$service['id'] ) {
                 $name = $service['name'];
                 unset( $services[$index] );
             }
