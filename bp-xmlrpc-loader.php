@@ -13,7 +13,7 @@
 
 
 if ( !defined( 'BP_XMLRPC_URL' ) )
-    define( 'BP_XMLRPC_URL', '/index.php?bp_xmlrpc=true' );
+    define( 'BP_XMLRPC_URL', get_bloginfo('url').'/index.php?bp_xmlrpc=true' );
 
 /**
  * Load code that needs BuddyPress to run once BP is loaded and initialized.
@@ -65,26 +65,7 @@ function bp_xmlrpc_admin_add_admin_menu() {
 }
 add_action( 'admin_menu', 'bp_xmlrpc_admin_add_admin_menu' );
 
-// Add rewrite rule and flush on plugin activation
-register_activation_hook( __FILE__, 'bp_xmlrpc_activate' );
-function bp_xmlrpc_activate() {
-    bp_xmlrpc_rewrite();
-    flush_rewrite_rules();
-}
- 
-// Flush on plugin deactivation
-register_deactivation_hook( __FILE__, 'bp_xmlrpc_deactivate' );
-function bp_xmlrpc_deactivate() {
-    flush_rewrite_rules();
-}
- 
-// Create new rewrite rule
-add_action( 'init', 'bp_xmlrpc_rewrite' );
-function bp_xmlrpc_rewrite() {
-    add_rewrite_rule( 'bpxmlrpc/?$', 'index.php?bp_xmlrpc=true', 'top' );
-}
-
-// But WordPress has a whitelist of variables it allows, so we must put it on that list
+// add custom variable to redirect
 add_action( 'query_vars', 'bp_xmlrpc_query_vars' );
 function bp_xmlrpc_query_vars( $query_vars )
 {
@@ -92,9 +73,7 @@ function bp_xmlrpc_query_vars( $query_vars )
     return $query_vars;
 }
 
-// If this is done, we can access it later
-// This example checks very early in the process:
-// if the variable is set, we include our page and stop execution after it
+// if the variable is set, we include our file and stop execution after it
 add_action( 'parse_request', 'bp_xmlrpc_parse_request' );
 function bp_xmlrpc_parse_request( &$wp )
 {
