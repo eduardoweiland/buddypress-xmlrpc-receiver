@@ -82,4 +82,3 @@ function bp_xmlrpc_parse_request( &$wp )
         exit();
     }
 }
-?>
