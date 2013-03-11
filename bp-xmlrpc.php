@@ -656,11 +656,7 @@ class bp_xmlrpc_server extends IXR_Server {
 
         $data['scope'] = $this->escape( $data['scope'] );
 
-        if ( $data['max'] ) {
-            if ( $data['max'] > 35 ) $max = 35;
-        } else {
-            $max = 35;
-        }
+		$max = @$data['max']?$data['max']:35;
 
 
         //set up our scopes of the activity stream to fetch
