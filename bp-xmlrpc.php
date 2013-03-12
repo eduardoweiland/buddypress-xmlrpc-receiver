@@ -70,6 +70,7 @@ class bp_xmlrpc_server extends IXR_Server {
 
             // add profile status activity_update
             'bp.updateProfileStatus'            => 'this:bp_xmlrpc_call_update_profile_status',
+            'bp.deleteProfileStatus'            => 'this:bp_xmlrpc_call_delete_profile_status',
             //'bp.postComment'                  => 'this:bp_xmlrpc_call_update_post_comment',
 
             // get mylists
