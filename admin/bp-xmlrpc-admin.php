@@ -102,7 +102,7 @@ function bp_xmlrpc_admin() {
         }
 
         if ( isset( $_POST['ab_xmlrpc_more_info'] ) ) {
-            update_option( 'bp_xmlrpc_more_info', $_POST['ab_xmlrpc_more_info'] );
+            update_option( 'bp_xmlrpc_more_info', preg_replace('|\\"|','"',$_POST['ab_xmlrpc_more_info']) );
         }
 
         $updated = true;
