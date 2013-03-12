@@ -59,7 +59,7 @@ function bp_xmlrpc_admin_check_for_cap( $cap = '' ) {
 
 
 function bp_xmlrpc_admin_calls( ) {
-    $calls = array( 'bp.getNotifications', 'bp.updateExternalBlogPostStatus', 'bp.deleteExternalBlogPostStatus', 'bp.updateProfileStatus', 'bp.getMyFriends', 'bp.getMyGroups', 'bp.getMyFollowing', 'bp.getMyFollowers', 'bp.getActivity' );
+    $calls = array( 'bp.getNotifications', 'bp.updateExternalBlogPostStatus', 'bp.deleteExternalBlogPostStatus', 'bp.updateProfileStatus', 'bp.deleteProfileStatus', 'bp.getMyFriends', 'bp.getMyGroups', 'bp.getMyFollowing', 'bp.getMyFollowers', 'bp.getActivity' );
     return $calls;
 }
 
