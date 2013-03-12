@@ -658,7 +658,6 @@ class bp_xmlrpc_server extends IXR_Server {
 
 		$max = @$data['max']?$data['max']:35;
 
-
         //set up our scopes of the activity stream to fetch
         if ( $data['scope'] == 'favorites' ) {
             $include = implode( ',', (array)bp_activity_get_user_favorites( $bp->loggedin_user->id ) );
