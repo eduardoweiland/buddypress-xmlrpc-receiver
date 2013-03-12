@@ -1,10 +1,9 @@
 === BuddyPress XML-RPC Receiver ===
-Contributors: nuprn1, duduweiland
-Donate link:
+Contributors: nuprn1, duduweiland, yuttadhammo
 Tags: buddypress, xmlrpc, xml-rpc, activity stream, activity, remote access
 Requires at least: PHP 5.2, WordPress 3.4.0, BuddyPress 1.5.6
-Tested up to: PHP 5.4.4, WordPress 3.4.1, BuddyPress 1.6.1
-Stable tag: 0.1.0
+Tested up to: PHP 5.4.4, WordPress 3.5.1, BuddyPress 1.6.1
+Stable tag: 0.1.2
 License: GPLv3
 
 This plugin allows remote access to BuddyPress networks through an XML-RPC API.
@@ -22,9 +21,9 @@ Please read the FAQ and About Page.
 
 = Related Links: = 
 
-* [Bug tracker](https://github.com/duduweiland/buddypress-xmlrpc-receiver/issues "Report bugs")
-* [Wiki](https://github.com/duduweiland/buddypress-xmlrpc-receiver/wiki "Project wiki")
-* [Source code](https://github.com/duduweiland/buddypress-xmlrpc-receiver "GitHub repository")
+* [Bug tracker](https://github.com/yuttadhammo/buddypress-xmlrpc-receiver/issues "Report bugs")
+* [Wiki](https://github.com/yuttadhammo/buddypress-xmlrpc-receiver/wiki "Project wiki")
+* [Source code](https://github.com/yuttadhammo/buddypress-xmlrpc-receiver "GitHub repository")
 
 
 == Installation ==
@@ -46,7 +45,7 @@ BuddyPress XML-RPC service. You can select which RPC commands to allow as well.
 = How do members retrieve data? =
 
 A client is required to send XML-RPC commands. You can build one yourself or try
-an existing one. Currently I don't know any working client.
+an existing one. For Android, there is [BuddyDroid](https://play.google.com/store/apps/details?id=org.yuttadhammo.buddydroid&hl=en) that works with this plugin.
 
 = What commands and data is returned? =
 
@@ -57,11 +56,16 @@ for a full list of commands and expected data.
 
 Please contact the developers on
 
-* [Project Page](https://github.com/duduweiland/buddypress-xmlrpc-receiver "BuddyPress XML-RPC Receiver - GitHub")
-* [Twitter](https://twitter.com/duduweiland "Twitter")
+* [Project Page](https://github.com/yuttadhammo/buddypress-xmlrpc-receiver "BuddyPress XML-RPC Receiver - GitHub")
 
 
 == Changelog ==
+
+= 0.1.2 =
+
+* fixed int casting
+* fixed max stream entries
+* removed need to access plugin directory
 
 = 0.1.1 =
 
