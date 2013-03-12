@@ -273,20 +273,23 @@ class bp_xmlrpc_server extends IXR_Server {
         if ( !$data['activityid'] )
             return new IXR_Error( 1553, __( 'Invalid Request - Missing content', 'bp-xmlrpc' ) );
 
-        /* Record this in activity streams */
-        $activity['confirmation'] = bp_activity_delete( array(
-            'id'                => $this->escape( $data['activityid'] ),
-            'user_id'           => $bp->loggedin_user->id,
-        ) );
+		$activity = new BP_Activity_Activity( (int) $data['activityid'] );
 
-        if ( $activity['confirmation'] ) {
-            $activity['message'] = __( 'Update Removed!', 'bp-xmlrpc' );
-            return $activity;
-        } else {
+		// Check access
+		if ( empty( $activity->user_id ) || ! bp_activity_user_can_delete( $activity ) )
+            return new IXR_Error( 1554, __( 'Not allowed to delete activity!', 'bp-xmlrpc' ) );
+
+		// Call the action before the delete so plugins can still fetch information about it
+		do_action( 'bp_activity_before_action_delete_activity', $activity->id, $activity->user_id );
+
+		$output['confirmation'] = bp_activity_delete( array( 'id' => $activity->id, 'user_id' => $activity->user_id ) );
+		if ( ! $output['confirmation'])
             return new IXR_Error( 1554, __( 'Activity not found', 'bp-xmlrpc' ) );
-        }
 
-        return new IXR_Error( 1500, __( 'There was an error connecting, please try again.', 'bp-xmlrpc' ) );
+		do_action( 'bp_activity_action_delete_activity', $activity->id, $activity->user_id );
+
+		$output['message'] = __( 'Activity removed!', 'bp-xmlrpc' );
+		return $output;
 
     }
 
