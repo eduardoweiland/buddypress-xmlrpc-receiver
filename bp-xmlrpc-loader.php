@@ -13,7 +13,7 @@
 
 
 if ( !defined( 'BP_XMLRPC_URL' ) )
-    define( 'BP_XMLRPC_URL', WP_PLUGIN_URL .'/'. basename( dirname( __FILE__ ) ) .'/bp-xmlrpc.php' );
+    define( 'BP_XMLRPC_URL', get_bloginfo('url').'/index.php?bp_xmlrpc=true' );
 
 /**
  * Load code that needs BuddyPress to run once BP is loaded and initialized.
@@ -65,4 +65,20 @@ function bp_xmlrpc_admin_add_admin_menu() {
 }
 add_action( 'admin_menu', 'bp_xmlrpc_admin_add_admin_menu' );
 
-?>
+// add custom variable to redirect
+add_action( 'query_vars', 'bp_xmlrpc_query_vars' );
+function bp_xmlrpc_query_vars( $query_vars )
+{
+    $query_vars[] = 'bp_xmlrpc';
+    return $query_vars;
+}
+
+// if the variable is set, we include our file and stop execution after it
+add_action( 'parse_request', 'bp_xmlrpc_parse_request' );
+function bp_xmlrpc_parse_request( &$wp )
+{
+    if ( array_key_exists( 'bp_xmlrpc', $wp->query_vars ) ) {
+        include( dirname( __FILE__ ) . '/bp-xmlrpc.php' );
+        exit();
+    }
+}

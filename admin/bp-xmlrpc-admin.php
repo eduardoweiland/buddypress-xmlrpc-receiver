@@ -59,7 +59,7 @@ function bp_xmlrpc_admin_check_for_cap( $cap = '' ) {
 
 
 function bp_xmlrpc_admin_calls( ) {
-    $calls = array( 'bp.getNotifications', 'bp.updateExternalBlogPostStatus', 'bp.deleteExternalBlogPostStatus', 'bp.updateProfileStatus', 'bp.getMyFriends', 'bp.getMyGroups', 'bp.getMyFollowing', 'bp.getMyFollowers', 'bp.getActivity' );
+    $calls = array( 'bp.getNotifications', 'bp.updateExternalBlogPostStatus', 'bp.deleteExternalBlogPostStatus', 'bp.updateProfileStatus', 'bp.deleteProfileStatus', 'bp.getMyFriends', 'bp.getMyGroups', 'bp.getMyFollowing', 'bp.getMyFollowers', 'bp.getActivity' );
     return $calls;
 }
 
@@ -102,7 +102,7 @@ function bp_xmlrpc_admin() {
         }
 
         if ( isset( $_POST['ab_xmlrpc_more_info'] ) ) {
-            update_option( 'bp_xmlrpc_more_info', $_POST['ab_xmlrpc_more_info'] );
+            update_option( 'bp_xmlrpc_more_info', preg_replace('|\\"|','"',$_POST['ab_xmlrpc_more_info']) );
         }
 
         $updated = true;

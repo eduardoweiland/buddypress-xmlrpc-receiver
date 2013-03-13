@@ -23,9 +23,6 @@ if ( !isset( $HTTP_RAW_POST_DATA ) ) {
 if ( isset( $HTTP_RAW_POST_DATA ) )
     $HTTP_RAW_POST_DATA = trim( $HTTP_RAW_POST_DATA );
 
-// Include the bootstrap for setting up WordPress environment
-include( '../../../wp-load.php' );
-
 if ( isset( $_GET['rsd'] ) ) { // http://archipelago.phrasewise.com/rsd
 header( 'Content-Type: text/xml; charset=' . get_option( 'blog_charset' ), true );
 ?>
@@ -73,6 +70,7 @@ class bp_xmlrpc_server extends IXR_Server {
 
             // add profile status activity_update
             'bp.updateProfileStatus'            => 'this:bp_xmlrpc_call_update_profile_status',
+            'bp.deleteProfileStatus'            => 'this:bp_xmlrpc_call_delete_profile_status',
             //'bp.postComment'                  => 'this:bp_xmlrpc_call_update_post_comment',
 
             // get mylists
@@ -247,6 +245,55 @@ class bp_xmlrpc_server extends IXR_Server {
         return new IXR_Error( 1500, __( 'There was an error when posting your update, please try again.', 'bp-xmlrpc' ) );
     }
 
+
+    /**
+     * Delete activity stream profile status
+     *
+     *
+     * @param array $args ($username, $password, $data['activityid'] )
+     * @return array (activity_id,message,confirmation);
+     */
+    function bp_xmlrpc_call_delete_profile_status( $args ) {
+        global $bp;
+
+        //check options if this is callable
+        $call = (array) maybe_unserialize( get_option( 'bp_xmlrpc_enabled_calls' ) );
+        if ( !bp_xmlrpc_calls_enabled_check( 'bp.deleteProfileStatus', $call ) )
+            return new IXR_Error( 405, __( 'XML-RPC call bp.deleteProfileStatus is disabled. ', 'bp-xmlrpc' ) );
+
+        // Parse the arguments, assuming they're in the correct order
+        $username = $this->escape( $args[0] );
+        $service  = $this->escape( $args[1] );
+        $apikey   = $this->escape( $args[2] );
+        $data     = $args[3];
+
+        if ( !$user = $this->login( $username, $service, $apikey ) )
+            return $this->error;
+
+        if ( !$data['activityid'] )
+            return new IXR_Error( 1553, __( 'Invalid Request - Missing content', 'bp-xmlrpc' ) );
+
+		$activity = new BP_Activity_Activity( (int) $data['activityid'] );
+
+		// Check access
+		if ( empty( $activity->user_id ) || ! bp_activity_user_can_delete( $activity ) )
+            return new IXR_Error( 1554, __( 'Not allowed to delete activity!', 'bp-xmlrpc' ) );
+
+		// Call the action before the delete so plugins can still fetch information about it
+		do_action( 'bp_activity_before_action_delete_activity', $activity->id, $activity->user_id );
+
+		$output['confirmation'] = bp_activity_delete( array( 'id' => $activity->id, 'user_id' => $activity->user_id ) );
+		if ( ! $output['confirmation'])
+            return new IXR_Error( 1554, __( 'Activity not found', 'bp-xmlrpc' ) );
+
+		do_action( 'bp_activity_action_delete_activity', $activity->id, $activity->user_id );
+
+		$output['message'] = __( 'Activity removed!', 'bp-xmlrpc' );
+		return $output;
+
+    }
+
+
     /**
      * Add activity stream blog status
      *
@@ -321,10 +368,10 @@ class bp_xmlrpc_server extends IXR_Server {
     }
 
     /**
-     * Delete activity stream profile status
+     * Delete activity stream blog status
      *
      *
-     * @param array $args ($username, $password, $data['blogpostid'] )
+     * @param array $args ($username, $password, $data['blogpostid','activityid'] )
      * @return array (activity_id,message,confirmation);
      */
     function bp_xmlrpc_call_delete_blog_post_status( $args ) {
@@ -659,12 +706,7 @@ class bp_xmlrpc_server extends IXR_Server {
 
         $data['scope'] = $this->escape( $data['scope'] );
 
-        if ( $data['max'] ) {
-            if ( $data['max'] > 35 ) $max = 35;
-        } else {
-            $max = 35;
-        }
-
+		$max = @$data['max']?$data['max']:35;
 
         //set up our scopes of the activity stream to fetch
         if ( $data['scope'] == 'favorites' ) {
@@ -861,5 +903,3 @@ class bp_xmlrpc_server extends IXR_Server {
 // start the server
 $bp_xmlrpc_server = new bp_xmlrpc_server();
 $bp_xmlrpc_server->serve_request();
-
-?>
