@@ -59,7 +59,21 @@ function bp_xmlrpc_admin_check_for_cap( $cap = '' ) {
 
 
 function bp_xmlrpc_admin_calls( ) {
-    $calls = array( 'bp.getNotifications', 'bp.updateExternalBlogPostStatus', 'bp.deleteExternalBlogPostStatus', 'bp.updateProfileStatus', 'bp.getMyFriends', 'bp.getMyGroups', 'bp.getMyFollowing', 'bp.getMyFollowers', 'bp.getActivity' );
+    $calls = array( 
+		'bp.getNotifications',
+		'bp.getMessages',
+		'bp.sendMessage',
+		'bp.updateExternalBlogPostStatus',
+		'bp.deleteExternalBlogPostStatus',
+		'bp.updateProfileStatus',
+		'bp.deleteProfileStatus',
+		'bp.postComment',
+		'bp.getMyFriends',
+		'bp.getGroups',
+		'bp.getActivity',
+		'bp.getMemberInfo',
+		'bp.deleteMember',
+    );
     return $calls;
 }
 
@@ -70,64 +84,117 @@ function bp_xmlrpc_admin_calls_check( $type, $currenttypes ) {
     return;
 }
 
+function bp_xmlrpc_caps_options() {
+	$out = '';
+	
+	$selected = get_option( 'bp_xmlrpc_cap_low' );
+	$caps = bp_xmlrpc_admin_get_role_capabilities();
+	
+	foreach($caps as $cap => $val) {
+		$out .= '<option value="'.$cap.'"'.($cap==$selected?' selected':'').'>'.$cap.'</option>';
+	}
+	return $out;
+}
+
+function bp_xmlrpc_admin_tabs( $current = 'main' ) {
+    $tabs = array( 'main' => 'Settings', 'access' => 'Access' );
+    echo '<div id="icon-options-general" class="icon32"><br></div>';
+    echo '<h2 class="nav-tab-wrapper">';
+    foreach( $tabs as $tab => $name ){
+        $class = ( $tab == $current ) ? ' nav-tab-active' : '';
+        echo "<a class='nav-tab$class' href='?page=bp-xmlrpc-settings&tab=$tab'>$name</a>";
+
+    }
+    echo '</h2>';
+}
+
 function bp_xmlrpc_admin() {
     global $bp;
+
+	if ( isset ( $_GET['tab'] ) )
+		$tab = $_GET['tab'];
+	else
+		$tab = 'main';
 
     /* If the form has been submitted and the admin referrer checks out, save the settings */
     if ( isset( $_POST['submit'] ) && check_admin_referer( 'bp_xmlrpc_admin' ) ) {
 
-        if( isset( $_POST['ab_xmlrpc_enable'] ) && !empty( $_POST['ab_xmlrpc_enable'] ) ) {
-            update_option( 'bp_xmlrpc_enabled', true );
-        } else {
-            update_option( 'bp_xmlrpc_enabled', false );
-        }
+		switch ( $tab ){
+			case 'main' :
+				if( isset( $_POST['ab_xmlrpc_enable'] ) && !empty( $_POST['ab_xmlrpc_enable'] ) ) {
+					update_option( 'bp_xmlrpc_enabled', true );
+				} else {
+					update_option( 'bp_xmlrpc_enabled', false );
+				}
 
-        //check for valid cap and update - if not keep old.
-        if( isset( $_POST['cap_low'] ) && !empty( $_POST['cap_low'] ) ) {
-            if ( bp_xmlrpc_admin_check_for_cap( $_POST['cap_low'] ) ) {
-                update_option( 'bp_xmlrpc_cap_low', $_POST['cap_low'] );
-            } else {
-                echo '<div id="message" class="error"><p>' . __( 'Invalid wordpress capability - please see <a href="http://codex.wordpress.org/Roles_and_Capabilities#Capability_vs._Role_Table">WP Roles and Capabilities</a>.', 'bp-xmlrpc' ) . '</p></div>';
-            }
-        } else {
-            update_option( 'bp_xmlrpc_cap_low', 'upload_files' );
+				if ( isset( $_POST['ab_xmlrpc_calls'] ) && !empty( $_POST['ab_xmlrpc_calls'] ) ) {
+					update_option( 'bp_xmlrpc_enabled_calls', $_POST['ab_xmlrpc_calls'] );
+				} else {
+					update_option( 'bp_xmlrpc_enabled_calls', '' );
+				}
 
-            echo '<div id="message" class="updated fade"><p>' . __( 'Capability was left blank - this is required - assuming \'upload_files\' (author).', 'bp-xmlrpc' ) . '</p></div>';
-        }
+				if ( isset( $_POST['ab_xmlrpc_more_info'] ) ) {
+					update_option( 'bp_xmlrpc_more_info', preg_replace('|\\"|','"',$_POST['ab_xmlrpc_more_info']) );
+				}
+				break;
+			case 'access' :
+			
+				//check for valid cap and update - if not keep old.
+				if( isset( $_POST['cap_low'] ) && !empty( $_POST['cap_low'] ) ) {
+					if ( bp_xmlrpc_admin_check_for_cap( $_POST['cap_low'] ) ) {
+						update_option( 'bp_xmlrpc_cap_low', $_POST['cap_low'] );
+					} else {
+						echo '<div id="message" class="error"><p>' . __( 'Invalid wordpress capability - please see <a href="http://codex.wordpress.org/Roles_and_Capabilities#Capability_vs._Role_Table">WP Roles and Capabilities</a>.', 'bp-xmlrpc' ) . '</p></div>';
+					}
+				} else {
+					update_option( 'bp_xmlrpc_cap_low', 'read' );
 
-        if ( isset( $_POST['ab_xmlrpc_calls'] ) && !empty( $_POST['ab_xmlrpc_calls'] ) ) {
-            update_option( 'bp_xmlrpc_enabled_calls', $_POST['ab_xmlrpc_calls'] );
-        } else {
-            update_option( 'bp_xmlrpc_enabled_calls', '' );
-        }
+					echo '<div id="message" class="updated fade"><p>' . __( 'Capability was left blank - this is required - assuming \'read\' (author).', 'bp-xmlrpc' ) . '</p></div>';
+				}
+				if( isset( $_POST['require_approval'] ) && !empty( $_POST['require_approval'] ) ) {
+					update_option( 'bp_xmlrpc_require_approval', true );
+				} else {
+					update_option( 'bp_xmlrpc_require_approval', false );
+				}
 
-        if ( isset( $_POST['ab_xmlrpc_more_info'] ) ) {
-            update_option( 'bp_xmlrpc_more_info', $_POST['ab_xmlrpc_more_info'] );
-        }
+				if( isset( $_POST['allowed_users'] ) )
+					update_option( 'bp_xmlrpc_allowed_users', $_POST['allowed_users'] );
+
+				break;
+		}
 
         $updated = true;
     }
+    
+    $allowed_users = explode("\n",get_option('bp_xmlrpc_allowed_users'));
+    
+	// if adding access
+
+    if ( isset ( $_GET['add_access'] ) && !in_array($_GET['add_access'],$allowed_users)) {
+		$allowed_users[] = $_GET['add_access'];
+		$added = true;
+	}
+    
 ?>
     <div class="wrap">
-        <div id="icon-options-general" class="icon32"><br/></div>
-
         <h2><?php _e( 'XML-RPC Options', 'bp-xmlrpc' ); ?></h2>
+        <?php if ( isset ( $_GET['tab'] ) ) bp_xmlrpc_admin_tabs($_GET['tab']); else bp_xmlrpc_admin_tabs(); ?>
 
         <?php if ( isset( $updated ) ) { echo '<div id="message" class="updated fade"><p>' . __( 'Settings Updated.', 'bp-xmlrpc' ) . '</p></div>'; } ?>
+        <?php if ( isset( $added ) ) { echo '<div id="message" class="updated fade"><p>' . __( 'User added to list - save options to commit.', 'bp-xmlrpc' ) . '</p></div>'; } ?>
 
-        <form action="<?php echo site_url() . '/wp-admin/admin.php?page=bp-xmlrpc-settings' ?>" name="bp-xmlrpc-settings-form" id="bp-xmlrpc-settings-form" method="post">
-
-            <?php $enabled = get_option( 'bp_xmlrpc_enabled' ); ?>
+        <form action="<?php admin_url( 'options-general.php?page=bp-xmlrpc-settings&tab='.$tab ); ?>" name="bp-xmlrpc-settings-form" id="bp-xmlrpc-settings-form" method="post">
+		<?php
+				switch ( $tab ){
+					case 'main' :
+						$enabled = get_option( 'bp_xmlrpc_enabled' ); 
+		?>
+            <h3><?php _e( 'Enable Plugin:', 'bp-xmlrpc' ); ?></h3>
 
             <table class="form-table">
                 <tr valign="top">
                     <th><label for="ab_xmlrpc_enable"><?php _e( 'Enable remote XML-RPC BuddyPress functions', 'bp-xmlrpc' ) ?></label></th>
                     <td><input id="ab_xmlrpc_enable" type="checkbox" <?php if ( $enabled ) echo 'checked'; ?> name="ab_xmlrpc_enable" value="1" /></td>
-                </tr>
-
-                <tr>
-                    <th scope="row"><label for="cap_low"><?php _e( 'XML-RPC WordPress capability (what level can access)', 'bp-xmlrpc' ) ?></label></th>
-                    <td><input type="text" name="cap_low" id="cap_low" value="<?php echo get_option( 'bp_xmlrpc_cap_low' ); ?>" /></td>
                 </tr>
 
             </table>
@@ -154,11 +221,41 @@ function bp_xmlrpc_admin() {
 
             <p><?php _e( 'By default, only the URL that the user should use to connect is displayed.', 'bp-xmlrpc' ); ?></p>
 
-            <textarea id="ab_xmlrpc_more_info" name="ab_xmlrpc_more_info" cols="80" rows="10" style="font-family: monospace"><?php echo get_option( 'bp_xmlrpc_more_info' ); ?></textarea>
+            <textarea id="ab_xmlrpc_more_info" name="ab_xmlrpc_more_info" cols="80" rows="10" style="font-family: monospace"><?php echo preg_replace("/\\\+(['\"])/","$1",get_option( 'bp_xmlrpc_more_info' )); ?></textarea>
 
-            <?php wp_nonce_field( 'bp_xmlrpc_admin' ); ?>
+			<?php
+						break;
+					case 'access':
+			?>
+            <h3><?php _e( 'Access Restrictions:', 'bp-xmlrpc' ); ?></h3>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="cap_low"><?php _e( 'WordPress capability required to access XML-RPC services', 'bp-xmlrpc' ) ?></label></th>
+                    <td><select name="cap_low" id="cap_low"><?php echo bp_xmlrpc_caps_options(); ?>" </select></td>
+                </tr>
+                <tr valign="top">
+                    <th><label for="require_approval"><?php _e( 'Require per user admin approval', 'bp-xmlrpc' ) ?></label></th>
+                    <td><input id="require_approval" type="checkbox" <?php if ( get_option( 'bp_xmlrpc_require_approval' ) ) echo 'checked'; ?> name="require_approval" value="1" /></td>
+                </tr>
+            </table>
 
-            <p class="submit"><input type="submit" name="submit" value="Save Settings"/></p>
+            <h3><?php _e( 'Allowed Users:', 'bp-xmlrpc' ); ?></h3>
+            <table class="form-table">
+				<tr>
+					<td>
+						Add allowed usernames, one per line<br/>
+						<textarea id="allowed_users" name="allowed_users" cols="40" rows="20" ><?php echo esc_html( stripslashes( implode( "\n", $allowed_users ) ) ); ?></textarea>
+					</td>
+				</tr>
+            </table>
+			<?php
+						break;
+				}
+			
+			?>
+
+		<?php wp_nonce_field( 'bp_xmlrpc_admin' ); ?>
+		<p class="submit"><input type="submit" name="submit" value="Save Settings"/></p>
 
         <h3><?php _e( 'Your client should be configured to connect to this URL:', 'bp-xmlrpc' ); ?></h3>
         <div>
@@ -167,8 +264,6 @@ function bp_xmlrpc_admin() {
 
         <h3><?php _e( 'About', 'bp-xmlrpc' ); ?></h3>
         <div id="bp-xmlrpc-admin-tips" style="margin-left:15px;">
-            <p>Copyright &copy 2012 Eduardo Weiland</p>
-
             <p><?php _e( 'This program is free software: you can redistribute it '   .
             'and/or modify it under the terms of the GNU General Public License '    .
             'as published by the Free Software Foundation, either version 3 of the ' .
@@ -180,7 +275,6 @@ function bp_xmlrpc_admin() {
             'See the GNU General Public License for more details. ', 'bp-xmlrpc' ); ?></p>
 
             <p><a href="http://www.gnu.org/licenses/gpl.txt"><?php _e( 'Full license text', 'bp-xmlrpc' ); ?></a></p>
-            <p><a href="http://github.com/duduweiland/buddypress-xmlrpc-receiver"><?php _e( 'Project page', 'bp-xmlrpc' ); ?></a></p>
 
         </div>
 
