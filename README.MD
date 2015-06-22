@@ -43,12 +43,12 @@ Allow your BuddyPress members to access certain BuddyPress features via XML-RPC.
 You may restrict settings on a wp_cap level. 
 You can select which RPC commands to allow as well.
 
-= How do members retrieve data? =
+# How do members retrieve data? 
 
 A client is required to send XML-RPC commands. You can build one yourself or try
 an existing one. For Android, there is [BuddyDroid](https://play.google.com/store/apps/details?id=org.yuttadhammo.buddydroid&hl=en) that works with this plugin.
 
-= What commands and data are returned? =
+# What commands and data are returned? =
 
 *Available methods:*
 
