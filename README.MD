@@ -1,4 +1,4 @@
-=== BuddyPress XML-RPC Receiver ===
+# BuddyPress XML-RPC Receiver 
 Contributors: nuprn1, duduweiland, yuttadhammo
 Tags: buddypress, xmlrpc, xml-rpc, activity stream, activity, remote access
 Requires at least: PHP 5.2, WordPress 3.4.0, BuddyPress 1.5.6
