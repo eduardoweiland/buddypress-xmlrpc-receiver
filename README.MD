@@ -9,7 +9,7 @@ License: GPLv3+
 This plugin allows remote access to BuddyPress networks through an XML-RPC API.
 
 
-== Description ==
+##Description
 
 This plugin allows remote access to BuddyPress networks through an XML-RPC API.
 
@@ -23,21 +23,21 @@ https://play.google.com/store/apps/details?id=org.yuttadhammo.buddydroid
 
 For more information on using this plugin, please read the FAQ and About Page.
 
-= Related Links: = 
+## Related Links:
 
 * [Source code](http://plugins.svn.wordpress.org/buddypress-xml-rpc-receiver/ "SVN repository")
 
 
-== Installation ==
+## Installation 
 
 1. Upload the full directory into your wp-content/plugins directory
 2. Activate the plugin at the plugin administration page
 3. Adjust settings via the WP-Admin BuddyPress XML-RPC page
 
 
-== Frequently Asked Questions ==
+## Frequently Asked Questions 
 
-= How does it work? =
+# How does it work? 
 
 Allow your BuddyPress members to access certain BuddyPress features via XML-RPC.
 You may restrict settings on a wp_cap level. 
