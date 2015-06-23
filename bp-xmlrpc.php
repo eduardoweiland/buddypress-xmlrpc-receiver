@@ -1298,6 +1298,7 @@ class bp_xmlrpc_server extends IXR_Server {
 			foreach($request_ids as $key=>$req_id){
 				$tmp=[];
 				$tmp['user_id']=$req_id;
+				$tmp['friendship_id']=BP_Friends_Friendship::get_friendship_id($req_id,$user_id);
 				$tmp['display_name']=bp_core_get_user_displayname($req_id);//bp-members-functions.php
 				//$tmp['avatar']=bp_core_fetch_avatar ( array( 'item_id' => $req_id, 'type' => 'full' ) );
 				$tmp['avatar']=bp_core_fetch_avatar ( array( 'item_id' => $req_id, 'type' => 'thumb' ) );
@@ -1305,10 +1306,6 @@ class bp_xmlrpc_server extends IXR_Server {
 
 			}
 		}
-
-
-		
-
 		return $output;
 	}
 
