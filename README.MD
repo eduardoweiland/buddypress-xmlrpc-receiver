@@ -1,4 +1,4 @@
-=== BuddyPress XML-RPC Receiver ===
+# BuddyPress XML-RPC Receiver 
 Contributors: nuprn1, duduweiland, yuttadhammo
 Tags: buddypress, xmlrpc, xml-rpc, activity stream, activity, remote access
 Requires at least: PHP 5.2, WordPress 3.4.0, BuddyPress 1.5.6
@@ -9,7 +9,7 @@ License: GPLv3+
 This plugin allows remote access to BuddyPress networks through an XML-RPC API.
 
 
-== Description ==
+##Description
 
 This plugin allows remote access to BuddyPress networks through an XML-RPC API.
 
@@ -23,32 +23,32 @@ https://play.google.com/store/apps/details?id=org.yuttadhammo.buddydroid
 
 For more information on using this plugin, please read the FAQ and About Page.
 
-= Related Links: = 
+## Related Links:
 
 * [Source code](http://plugins.svn.wordpress.org/buddypress-xml-rpc-receiver/ "SVN repository")
 
 
-== Installation ==
+## Installation 
 
 1. Upload the full directory into your wp-content/plugins directory
 2. Activate the plugin at the plugin administration page
 3. Adjust settings via the WP-Admin BuddyPress XML-RPC page
 
 
-== Frequently Asked Questions ==
+## Frequently Asked Questions 
 
-= How does it work? =
+# How does it work? 
 
 Allow your BuddyPress members to access certain BuddyPress features via XML-RPC.
 You may restrict settings on a wp_cap level. 
 You can select which RPC commands to allow as well.
 
-= How do members retrieve data? =
+# How do members retrieve data? 
 
 A client is required to send XML-RPC commands. You can build one yourself or try
 an existing one. For Android, there is [BuddyDroid](https://play.google.com/store/apps/details?id=org.yuttadhammo.buddydroid&hl=en) that works with this plugin.
 
-= What commands and data are returned? =
+# What commands and data are returned? =
 
 *Available methods:*
 
