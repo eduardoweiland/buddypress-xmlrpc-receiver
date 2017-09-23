@@ -1,3 +1,8 @@
+# Adandoned
+
+This project is no longer supported. There is a fork available at
+https://github.com/ubuntume/buddypress-xmlrpc-receiver
+
 # BuddyPress XML-RPC Receiver 
 Contributors: nuprn1, duduweiland, yuttadhammo
 Tags: buddypress, xmlrpc, xml-rpc, activity stream, activity, remote access
